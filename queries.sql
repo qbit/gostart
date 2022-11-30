@@ -17,8 +17,8 @@ from watch_items
 where owner_id = ?;
 
 -- name: AddWatchItem :one
-insert into watch_items (owner_id, name, descr)
-values (?, ?, ?) returning *;
+insert into watch_items (owner_id, name, repo, descr)
+values (?, ?, ?, ?) returning *;
 
 -- name: DeleteWatchItem :exec
 delete from watch_items where id = ? and owner_id = ?;

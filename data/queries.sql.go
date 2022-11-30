@@ -146,24 +146,31 @@ func (q *Queries) AddPullRequestIgnore(ctx context.Context, arg AddPullRequestIg
 }
 
 const addWatchItem = `-- name: AddWatchItem :one
-insert into watch_items (owner_id, name, descr)
-values (?, ?, ?) returning id, owner_id, created_at, name, descr
+insert into watch_items (owner_id, name, repo, descr)
+values (?, ?, ?, ?) returning id, owner_id, created_at, name, repo, descr
 `
 
 type AddWatchItemParams struct {
 	OwnerID int64          `json:"owner_id"`
 	Name    string         `json:"name"`
+	Repo    string         `json:"repo"`
 	Descr   sql.NullString `json:"descr"`
 }
 
 func (q *Queries) AddWatchItem(ctx context.Context, arg AddWatchItemParams) (WatchItem, error) {
-	row := q.db.QueryRowContext(ctx, addWatchItem, arg.OwnerID, arg.Name, arg.Descr)
+	row := q.db.QueryRowContext(ctx, addWatchItem,
+		arg.OwnerID,
+		arg.Name,
+		arg.Repo,
+		arg.Descr,
+	)
 	var i WatchItem
 	err := row.Scan(
 		&i.ID,
 		&i.OwnerID,
 		&i.CreatedAt,
 		&i.Name,
+		&i.Repo,
 		&i.Descr,
 	)
 	return i, err
@@ -364,7 +371,7 @@ func (q *Queries) GetAllPullRequests(ctx context.Context, arg GetAllPullRequests
 }
 
 const getAllWatchItems = `-- name: GetAllWatchItems :many
-select id, owner_id, created_at, name, descr
+select id, owner_id, created_at, name, repo, descr
 from watch_items
 `
 
@@ -382,6 +389,7 @@ func (q *Queries) GetAllWatchItems(ctx context.Context) ([]WatchItem, error) {
 			&i.OwnerID,
 			&i.CreatedAt,
 			&i.Name,
+			&i.Repo,
 			&i.Descr,
 		); err != nil {
 			return nil, err
@@ -398,7 +406,7 @@ func (q *Queries) GetAllWatchItems(ctx context.Context) ([]WatchItem, error) {
 }
 
 const getAllWatchItemsByOwner = `-- name: GetAllWatchItemsByOwner :many
-select id, owner_id, created_at, name, descr
+select id, owner_id, created_at, name, repo, descr
 from watch_items
 where owner_id = ?
 `
@@ -417,6 +425,7 @@ func (q *Queries) GetAllWatchItemsByOwner(ctx context.Context, ownerID int64) ([
 			&i.OwnerID,
 			&i.CreatedAt,
 			&i.Name,
+			&i.Repo,
 			&i.Descr,
 		); err != nil {
 			return nil, err

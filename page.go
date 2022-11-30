@@ -18,7 +18,7 @@ const gqEndPoint = "https://api.github.com/graphql"
 const graphQuery = `
 {      
 	search(
-		query: "is:open is:public archived:false repo:nixos/nixpkgs in:title %s", 
+		query: "is:open is:public archived:false repo:%s in:title %s", 
 		type: ISSUE, 
 		first: 20
 	) {
@@ -144,7 +144,7 @@ func (w *WatchResults) Update(ghToken string) error {
 	}
 
 	for _, watch := range watches {
-		qd := GQLQuery{Query: fmt.Sprintf(graphQuery, watch.Name)}
+		qd := GQLQuery{Query: fmt.Sprintf(graphQuery, watch.Repo, watch.Name)}
 		wr, err := getData(qd, ghToken)
 		if err != nil {
 			return err
@@ -153,6 +153,7 @@ func (w *WatchResults) Update(ghToken string) error {
 		// TODO: cross ref the list of ignores and prune the wr accordingly
 		wr.OwnerID = watch.OwnerID
 		wr.Name = watch.Name
+		wr.Repo = watch.Repo
 		*w = append(*w, *wr)
 	}
 
@@ -163,6 +164,7 @@ type WatchResult struct {
 	Data    Data `json:"data,omitempty"`
 	OwnerID int64
 	Name    string
+	Repo    string
 }
 type Repository struct {
 	NameWithOwner string `json:"nameWithOwner,omitempty"`

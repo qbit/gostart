@@ -56,5 +56,6 @@ type WatchItem struct {
 	OwnerID   int64          `json:"owner_id"`
 	CreatedAt time.Time      `json:"created_at"`
 	Name      string         `json:"name"`
+	Repo      string         `json:"repo"`
 	Descr     sql.NullString `json:"descr"`
 }

@@ -1,6 +1,6 @@
 <html lang="en">
 <head>
-<!--    <link rel="stylesheet" href="assets/bolt.css">-->
+    <!--    <link rel="stylesheet" href="assets/bolt.css">-->
     <link rel="stylesheet" href="assets/pico.css">
     <style>
         .icons li {
@@ -14,42 +14,59 @@
             list-style-type: none;
             text-align: center;
         }
+
         .icons li img {
             width: 50px;
             hight: 50px;
+        }
+        dialog {
+            display: none;
         }
     </style>
     <title>{{.Title}}::{{.Node.ComputedName}}</title>
 </head>
 <body>
-<h1>{{.Title}} for {{.Node.ComputedName}}</h1>
-<h3>Pull Requests</h3>
-<ul>
-    {{range .PullRequests}}
-    <li>{{.Repo}} {{.Number}} ( {{.ID}} )</li>
-    {{end}}
-</ul>
-
-<h3>Watch Items</h3>
-<ul class="">
-    {{range .Watches}}
-    <li>{{.Name}}
-        <ul>
-            {{range .Data.Search.Edges}}
-            <li>{{.Node.Title}} ({{.Node.CreatedAt}})</li>
-            {{end}}
-        </ul>
-    </li>
-    {{end}}
-</ul>
-
-<h3>Links</h3>
-<ul class="icons">
-    {{range .Links}}
-    <li>{{.Name}}</li>
-    {{end}}
-</ul>
-
-<foot>Remaining queries: {{.CurrentLimits.Remaining}}</foot>
+<header>
+    <h1>{{.Title}} for {{.Node.ComputedName}}</h1>
+    <input type="search" id="search" name="search" placeholder="Search">
+    <ul class="icons">
+        {{range .Links}}
+        <li>{{.Name}}</li>
+        {{end}}
+    </ul>
+</header>
+<main>
+    <h3>Pull Requests</h3>
+    <ul>
+        {{range .PullRequests}}
+        <li>{{.Repo}} {{.Number}} ( {{.ID}} )</li>
+        {{end}}
+    </ul>
+    <h3>Watch Items</h3>
+    <ul class="">
+        {{range .Watches}}
+        <li><b>{{.Repo}} :: {{.Name}}</b>
+            <ul>
+                {{range .Data.Search.Edges}}
+                <li>{{.Node.Title}}</li>
+                {{end}}
+            </ul>
+        </li>
+        {{end}}
+    </ul>
+    <dialog open>
+        <article>
+            <h3>Add Watch Item</h3>
+            <p>
+                <input type="text" />
+            </p>
+            <footer>
+                <a href="#cancel" role="button" class="secondary">Cancel</a>
+                <a href="#confirm" role="button">Add</a>
+            </footer>
+        </article>
+    </dialog>
+</main>
+<footer>Remaining queries: {{.CurrentLimits.Remaining}}</footer>
 </body>
 </html>

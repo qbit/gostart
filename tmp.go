@@ -15,12 +15,13 @@ func tmpDBPopulate(db *sql.DB) {
 
 	ownerID := int64(57395170551826799)
 
-	a, err := app.queries.AddOwner(app.ctx, data.AddOwnerParams{
+	_, err := app.queries.AddOwner(app.ctx, data.AddOwnerParams{
 		ID:   57395170551826799,
 		Name: "europa.humpback-trout.ts.net.",
 	})
-	log.Println(a, err)
-
+	if err != nil {
+		log.Fatal(err)
+	}
 	b, err := app.queries.AddLink(app.ctx, data.AddLinkParams{
 		OwnerID: ownerID,
 		Url:     "https://tapenet.org",
@@ -28,23 +29,30 @@ func tmpDBPopulate(db *sql.DB) {
 	})
 	log.Println(b, err)
 
-	c, err := app.queries.AddPullRequest(app.ctx, data.AddPullRequestParams{
+	_, err = app.queries.AddPullRequest(app.ctx, data.AddPullRequestParams{
 		OwnerID:     ownerID,
 		Number:      1234,
 		Repo:        "NixOS/nixpkgs",
 		Description: sql.NullString{String: "who knows"},
 	})
-	log.Println(c, err)
-
-	d, err := app.queries.AddWatchItem(app.ctx, data.AddWatchItemParams{
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = app.queries.AddWatchItem(app.ctx, data.AddWatchItemParams{
 		Name:    "tailscale",
+		Repo:    "NixOS/nixpkgs",
 		OwnerID: ownerID,
 	})
-	log.Println(d, err)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	e, err := app.queries.AddWatchItem(app.ctx, data.AddWatchItemParams{
+	_, err = app.queries.AddWatchItem(app.ctx, data.AddWatchItemParams{
 		Name:    "openssh",
 		OwnerID: ownerID,
+		Repo:    "NixOS/nixpkgs",
 	})
-	log.Println(e, err)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
