@@ -21,7 +21,10 @@ insert into watch_items (owner_id, name, repo, descr)
 values (?, ?, ?, ?) returning *;
 
 -- name: DeleteWatchItem :exec
-delete from watch_items where id = ? and owner_id = ?;
+delete
+from watch_items
+where id = ?
+  and owner_id = ?;
 
 -- name: GetAllLinks :many
 select *
@@ -33,7 +36,10 @@ insert into links (owner_id, url, name, logo_url)
 values (?, ?, ?, ?) returning *;
 
 -- name: DeleteLink :exec
-delete from links where id = ? and owner_id = ?;
+delete
+from links
+where id = ?
+  and owner_id = ?;
 
 -- name: GetAllIcons :many
 select *
@@ -57,7 +63,10 @@ insert into pull_requests (owner_id, number, repo, description)
 values (?, ?, ?, ?) returning *;
 
 -- name: DeletePullRequest :exec
-delete from pull_requests where id = ? and owner_id = ?;
+delete
+from pull_requests
+where id = ?
+  and owner_id = ?;
 
 -- name: GetAllPullRequestIgnores :many
 select *
