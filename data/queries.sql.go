@@ -7,50 +7,42 @@ package data
 
 import (
 	"context"
-	"database/sql"
 )
 
-const addIcon = `-- name: AddIcon :one
-insert into icons (owner_id, url, content_type, data)
-values (?, ?, ?, ?) returning id, owner_id, created_at, url, content_type, data
+const addIcon = `-- name: AddIcon :exec
+insert
+into icons (owner_id, link_id, content_type, data)
+values (?, ?, ?, ?) on conflict(link_id) do
+update set data = excluded.data, content_type = excluded.content_type
 `
 
 type AddIconParams struct {
 	OwnerID     int64  `json:"owner_id"`
-	Url         string `json:"url"`
+	LinkID      int64  `json:"link_id"`
 	ContentType string `json:"content_type"`
 	Data        []byte `json:"data"`
 }
 
-func (q *Queries) AddIcon(ctx context.Context, arg AddIconParams) (Icon, error) {
-	row := q.db.QueryRowContext(ctx, addIcon,
+func (q *Queries) AddIcon(ctx context.Context, arg AddIconParams) error {
+	_, err := q.db.ExecContext(ctx, addIcon,
 		arg.OwnerID,
-		arg.Url,
+		arg.LinkID,
 		arg.ContentType,
 		arg.Data,
 	)
-	var i Icon
-	err := row.Scan(
-		&i.ID,
-		&i.OwnerID,
-		&i.CreatedAt,
-		&i.Url,
-		&i.ContentType,
-		&i.Data,
-	)
-	return i, err
+	return err
 }
 
 const addLink = `-- name: AddLink :one
 insert into links (owner_id, url, name, logo_url)
-values (?, ?, ?, ?) returning id, owner_id, created_at, url, name, logo_url
+values (?, ?, ?, ?) returning id, owner_id, created_at, url, name, clicked, logo_url
 `
 
 type AddLinkParams struct {
-	OwnerID int64          `json:"owner_id"`
-	Url     string         `json:"url"`
-	Name    string         `json:"name"`
-	LogoUrl sql.NullString `json:"logo_url"`
+	OwnerID int64  `json:"owner_id"`
+	Url     string `json:"url"`
+	Name    string `json:"name"`
+	LogoUrl string `json:"logo_url"`
 }
 
 func (q *Queries) AddLink(ctx context.Context, arg AddLinkParams) (Link, error) {
@@ -67,6 +59,7 @@ func (q *Queries) AddLink(ctx context.Context, arg AddLinkParams) (Link, error) 
 		&i.CreatedAt,
 		&i.Url,
 		&i.Name,
+		&i.Clicked,
 		&i.LogoUrl,
 	)
 	return i, err
@@ -74,7 +67,7 @@ func (q *Queries) AddLink(ctx context.Context, arg AddLinkParams) (Link, error) 
 
 const addOwner = `-- name: AddOwner :one
 insert into owners (id, name)
-values (?, ?) returning id, created_at, name
+values (?, ?) returning id, created_at, last_used, name
 `
 
 type AddOwnerParams struct {
@@ -85,7 +78,12 @@ type AddOwnerParams struct {
 func (q *Queries) AddOwner(ctx context.Context, arg AddOwnerParams) (Owner, error) {
 	row := q.db.QueryRowContext(ctx, addOwner, arg.ID, arg.Name)
 	var i Owner
-	err := row.Scan(&i.ID, &i.CreatedAt, &i.Name)
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.LastUsed,
+		&i.Name,
+	)
 	return i, err
 }
 
@@ -95,10 +93,10 @@ values (?, ?, ?, ?) returning id, owner_id, created_at, number, repo, descriptio
 `
 
 type AddPullRequestParams struct {
-	OwnerID     int64          `json:"owner_id"`
-	Number      int64          `json:"number"`
-	Repo        string         `json:"repo"`
-	Description sql.NullString `json:"description"`
+	OwnerID     int64  `json:"owner_id"`
+	Number      int64  `json:"number"`
+	Repo        string `json:"repo"`
+	Description string `json:"description"`
 }
 
 func (q *Queries) AddPullRequest(ctx context.Context, arg AddPullRequestParams) (PullRequest, error) {
@@ -146,24 +144,18 @@ func (q *Queries) AddPullRequestIgnore(ctx context.Context, arg AddPullRequestIg
 }
 
 const addWatchItem = `-- name: AddWatchItem :one
-insert into watch_items (owner_id, name, repo, descr)
-values (?, ?, ?, ?) returning id, owner_id, created_at, name, repo, descr
+insert into watch_items (owner_id, name, repo)
+values (?, ?, ?) returning id, owner_id, created_at, name, repo
 `
 
 type AddWatchItemParams struct {
-	OwnerID int64          `json:"owner_id"`
-	Name    string         `json:"name"`
-	Repo    string         `json:"repo"`
-	Descr   sql.NullString `json:"descr"`
+	OwnerID int64  `json:"owner_id"`
+	Name    string `json:"name"`
+	Repo    string `json:"repo"`
 }
 
 func (q *Queries) AddWatchItem(ctx context.Context, arg AddWatchItemParams) (WatchItem, error) {
-	row := q.db.QueryRowContext(ctx, addWatchItem,
-		arg.OwnerID,
-		arg.Name,
-		arg.Repo,
-		arg.Descr,
-	)
+	row := q.db.QueryRowContext(ctx, addWatchItem, arg.OwnerID, arg.Name, arg.Repo)
 	var i WatchItem
 	err := row.Scan(
 		&i.ID,
@@ -171,13 +163,15 @@ func (q *Queries) AddWatchItem(ctx context.Context, arg AddWatchItemParams) (Wat
 		&i.CreatedAt,
 		&i.Name,
 		&i.Repo,
-		&i.Descr,
 	)
 	return i, err
 }
 
 const deleteLink = `-- name: DeleteLink :exec
-delete from links where id = ? and owner_id = ?
+delete
+from links
+where id = ?
+  and owner_id = ?
 `
 
 type DeleteLinkParams struct {
@@ -191,7 +185,10 @@ func (q *Queries) DeleteLink(ctx context.Context, arg DeleteLinkParams) error {
 }
 
 const deletePullRequest = `-- name: DeletePullRequest :exec
-delete from pull_requests where id = ? and owner_id = ?
+delete
+from pull_requests
+where id = ?
+  and owner_id = ?
 `
 
 type DeletePullRequestParams struct {
@@ -205,7 +202,10 @@ func (q *Queries) DeletePullRequest(ctx context.Context, arg DeletePullRequestPa
 }
 
 const deleteWatchItem = `-- name: DeleteWatchItem :exec
-delete from watch_items where id = ? and owner_id = ?
+delete
+from watch_items
+where id = ?
+  and owner_id = ?
 `
 
 type DeleteWatchItemParams struct {
@@ -219,7 +219,7 @@ func (q *Queries) DeleteWatchItem(ctx context.Context, arg DeleteWatchItemParams
 }
 
 const getAllIcons = `-- name: GetAllIcons :many
-select id, owner_id, created_at, url, content_type, data
+select owner_id, link_id, created_at, content_type, data
 from icons
 where owner_id = ?
 `
@@ -234,10 +234,9 @@ func (q *Queries) GetAllIcons(ctx context.Context, ownerID int64) ([]Icon, error
 	for rows.Next() {
 		var i Icon
 		if err := rows.Scan(
-			&i.ID,
 			&i.OwnerID,
+			&i.LinkID,
 			&i.CreatedAt,
-			&i.Url,
 			&i.ContentType,
 			&i.Data,
 		); err != nil {
@@ -255,13 +254,12 @@ func (q *Queries) GetAllIcons(ctx context.Context, ownerID int64) ([]Icon, error
 }
 
 const getAllLinks = `-- name: GetAllLinks :many
-select id, owner_id, created_at, url, name, logo_url
+select id, owner_id, created_at, url, name, clicked, logo_url
 from links
-where owner_id = ?
 `
 
-func (q *Queries) GetAllLinks(ctx context.Context, ownerID int64) ([]Link, error) {
-	rows, err := q.db.QueryContext(ctx, getAllLinks, ownerID)
+func (q *Queries) GetAllLinks(ctx context.Context) ([]Link, error) {
+	rows, err := q.db.QueryContext(ctx, getAllLinks)
 	if err != nil {
 		return nil, err
 	}
@@ -275,6 +273,44 @@ func (q *Queries) GetAllLinks(ctx context.Context, ownerID int64) ([]Link, error
 			&i.CreatedAt,
 			&i.Url,
 			&i.Name,
+			&i.Clicked,
+			&i.LogoUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAllLinksForOwner = `-- name: GetAllLinksForOwner :many
+select id, owner_id, created_at, url, name, clicked, logo_url
+from links
+where owner_id = ?
+`
+
+func (q *Queries) GetAllLinksForOwner(ctx context.Context, ownerID int64) ([]Link, error) {
+	rows, err := q.db.QueryContext(ctx, getAllLinksForOwner, ownerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Link{}
+	for rows.Next() {
+		var i Link
+		if err := rows.Scan(
+			&i.ID,
+			&i.OwnerID,
+			&i.CreatedAt,
+			&i.Url,
+			&i.Name,
+			&i.Clicked,
 			&i.LogoUrl,
 		); err != nil {
 			return nil, err
@@ -371,7 +407,7 @@ func (q *Queries) GetAllPullRequests(ctx context.Context, arg GetAllPullRequests
 }
 
 const getAllWatchItems = `-- name: GetAllWatchItems :many
-select id, owner_id, created_at, name, repo, descr
+select id, owner_id, created_at, name, repo
 from watch_items
 `
 
@@ -390,7 +426,6 @@ func (q *Queries) GetAllWatchItems(ctx context.Context) ([]WatchItem, error) {
 			&i.CreatedAt,
 			&i.Name,
 			&i.Repo,
-			&i.Descr,
 		); err != nil {
 			return nil, err
 		}
@@ -406,7 +441,7 @@ func (q *Queries) GetAllWatchItems(ctx context.Context) ([]WatchItem, error) {
 }
 
 const getAllWatchItemsByOwner = `-- name: GetAllWatchItemsByOwner :many
-select id, owner_id, created_at, name, repo, descr
+select id, owner_id, created_at, name, repo
 from watch_items
 where owner_id = ?
 `
@@ -426,7 +461,6 @@ func (q *Queries) GetAllWatchItemsByOwner(ctx context.Context, ownerID int64) ([
 			&i.CreatedAt,
 			&i.Name,
 			&i.Repo,
-			&i.Descr,
 		); err != nil {
 			return nil, err
 		}
@@ -441,8 +475,33 @@ func (q *Queries) GetAllWatchItemsByOwner(ctx context.Context, ownerID int64) ([
 	return items, nil
 }
 
+const getIconByLinkID = `-- name: GetIconByLinkID :one
+select owner_id, link_id, created_at, content_type, data
+from icons
+where owner_id = ?
+  and link_id = ?
+`
+
+type GetIconByLinkIDParams struct {
+	OwnerID int64 `json:"owner_id"`
+	LinkID  int64 `json:"link_id"`
+}
+
+func (q *Queries) GetIconByLinkID(ctx context.Context, arg GetIconByLinkIDParams) (Icon, error) {
+	row := q.db.QueryRowContext(ctx, getIconByLinkID, arg.OwnerID, arg.LinkID)
+	var i Icon
+	err := row.Scan(
+		&i.OwnerID,
+		&i.LinkID,
+		&i.CreatedAt,
+		&i.ContentType,
+		&i.Data,
+	)
+	return i, err
+}
+
 const getOwner = `-- name: GetOwner :one
-select id, created_at, name
+select id, created_at, last_used, name
 from owners
 where id = ?
 `
@@ -450,6 +509,11 @@ where id = ?
 func (q *Queries) GetOwner(ctx context.Context, id int64) (Owner, error) {
 	row := q.db.QueryRowContext(ctx, getOwner, id)
 	var i Owner
-	err := row.Scan(&i.ID, &i.CreatedAt, &i.Name)
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.LastUsed,
+		&i.Name,
+	)
 	return i, err
 }

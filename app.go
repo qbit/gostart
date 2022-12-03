@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"net/http"
 
 	"suah.dev/gostart/data"
@@ -24,5 +25,22 @@ func (a *App) getOwner(r *http.Request) (*tailcfg.Node, error) {
 		return nil, err
 	}
 
+	ownerID := int64(who.Node.ID)
+
+	ownerExists, err := a.queries.GetOwner(a.ctx, ownerID)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if ownerExists.ID != ownerID {
+		_, err = a.queries.AddOwner(a.ctx, data.AddOwnerParams{
+			ID:   int64(who.Node.ID),
+			Name: who.Node.ComputedName,
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	
 	return who.Node, nil
 }

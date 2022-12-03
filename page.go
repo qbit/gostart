@@ -100,7 +100,7 @@ type Page struct {
 
 func (p *Page) Sort() {
 	sort.Slice(p.Links, func(i, j int) bool {
-		return p.Links[i].Name > p.Links[j].Name
+		return p.Links[i].Name < p.Links[j].Name
 	})
 	sort.Slice(p.PullRequests, func(i, j int) bool {
 		return p.PullRequests[i].Number > p.PullRequests[j].Number
@@ -119,7 +119,6 @@ type WatchResults []WatchResult
 
 func (w WatchResults) forID(ownerID int64) WatchResults {
 	newResults := WatchResults{}
-	fmt.Printf("%v\n", w)
 	for _, r := range w {
 		if r.OwnerID == ownerID {
 			newResults = append(newResults, r)
@@ -130,10 +129,14 @@ func (w WatchResults) forID(ownerID int64) WatchResults {
 }
 
 func (w WatchResults) GetLimits() *RateLimit {
+	rl := &RateLimit{}
 	sort.Slice(w, func(i, j int) bool {
 		return w[i].Data.RateLimit.Remaining < w[j].Data.RateLimit.Remaining
 	})
-	return &w[0].Data.RateLimit
+	if len(w) > 0 {
+		rl = &w[0].Data.RateLimit
+	}
+	return rl
 }
 
 func (w *WatchResults) Update(ghToken string) error {

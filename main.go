@@ -7,7 +7,8 @@ import (
 	"embed"
 	_ "embed"
 	"flag"
-	"github.com/go-chi/render"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/render"
 	_ "modernc.org/sqlite"
 	"suah.dev/gostart/data"
 	"tailscale.com/client/tailscale"
@@ -39,17 +41,13 @@ var app = &App{
 func main() {
 	name := flag.String("name", "startpage", "name of service")
 	key := flag.String("key", "", "path to file containing the api key")
-	dbFile := flag.String("db", "", "path to on-disk database file")
+	dbFile := flag.String("db", ":memory:", "path to on-disk database file")
 	tokenFile := flag.String("auth", "", "path to file containing GH auth token")
 	flag.Parse()
 
-	var db *sql.DB
-	var err error
-	if *dbFile == "" {
-		db, err = sql.Open("sqlite", ":memory:")
-		if err != nil {
-			log.Fatal(err)
-		}
+	db, err := sql.Open("sqlite", fmt.Sprintf("%s?cache=shared&mode=rwc", *dbFile))
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	app.queries = data.New(db)
@@ -60,8 +58,18 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	app.watches = &WatchResults{}
 
-	tmpDBPopulate(db)
+	if *dbFile == ":memory:" {
+		tmpDBPopulate(db)
+	} else {
+		if _, err := os.Stat(*dbFile); os.IsNotExist(err) {
+			log.Println("Creating database..")
+			if _, err := db.ExecContext(app.ctx, schema); err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
 
 	if *key != "" {
 		keyData, err := os.ReadFile(*key)
@@ -102,14 +110,19 @@ func main() {
 	r.Route("/links", func(r chi.Router) {
 		r.Use(render.SetContentType(render.ContentTypeJSON))
 		r.Get("/", linksGET)
+		r.Delete("/{linkID:[0-9]+}", linkDELETE)
 		r.Post("/", linksPOST)
 	})
 	r.Route("/watches", func(r chi.Router) {
 		r.Use(render.SetContentType(render.ContentTypeJSON))
 		r.Get("/", watchitemGET)
+		r.Delete("/{watchID:[0-9]+}", watchitemDELETE)
+		r.Post("/", watchitemPOST)
+	})
+	r.Route("/icons", func(r chi.Router) {
+		r.Get("/{linkID:[0-9]+}", iconGET)
 	})
 
-	app.watches = &WatchResults{}
 	ghToken := os.Getenv("GH_AUTH_TOKEN")
 
 	if *tokenFile != "" && ghToken == "" {
@@ -126,6 +139,41 @@ func main() {
 			log.Fatal(err)
 		}
 		time.Sleep(5 * time.Minute)
+	}()
+
+	go func() {
+		links, err := app.queries.GetAllLinks(app.ctx)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for _, link := range links {
+			fmt.Println(link.LogoUrl)
+			resp, err := http.Get(link.LogoUrl)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			defer resp.Body.Close()
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			contentType := resp.Header.Get("Content-Type")
+
+			err = app.queries.AddIcon(app.ctx, data.AddIconParams{
+				OwnerID:     link.OwnerID,
+				LinkID:      link.ID,
+				ContentType: contentType,
+				Data:        body,
+			})
+			if err != nil {
+				log.Fatal(err)
+
+			}
+		}
+		time.Sleep(24 * time.Hour)
 	}()
 
 	hs := &http.Server{

@@ -1,27 +1,47 @@
 <html lang="en">
 <head>
-    <!--    <link rel="stylesheet" href="assets/bolt.css">-->
-    <link rel="stylesheet" href="assets/pico.css">
+    <!--    <link rel="stylesheet" href="assets/pico.css">-->
     <style>
-        .icons li {
-            float: left;
+        .icon {
+            cursor: pointer;
             padding: 10px;
             margin: 10px;
-            width: 130px;
-            height: 130px;
+            width: 100px;
+            height: 100px;
             border-radius: 10px;
             border: 1px solid black;
             list-style-type: none;
             text-align: center;
         }
 
-        .icons li img {
+        .icon img {
             width: 50px;
             hight: 50px;
         }
 
-        dialog {
-            display: none;
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+        }
+
+        .col {
+            border: 1px solid black;
+            border-radius: 10px;
+        }
+
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 3px;
+        }
+
+        header {
+            padding: 0px !important;
+        }
+
+        main {
+            padding: 5px !important;
         }
     </style>
     <title>{{.Title}}::{{.Node.ComputedName}}</title>
@@ -29,45 +49,112 @@
 <body>
 <header>
     <h1>{{.Title}} for {{.Node.ComputedName}}</h1>
-    <input type="search" id="search" name="search" placeholder="Search">
-    <ul class="icons">
-        {{range .Links}}
-        <li>{{.Name}}</li>
-        {{end}}
-    </ul>
+    Remaining queries: {{.CurrentLimits.Remaining}}
 </header>
 <main>
-    <h3>Pull Requests</h3>
-    <ul>
-        {{range .PullRequests}}
-        <li>{{.Repo}} {{.Number}} ( {{.ID}} )</li>
-        {{end}}
-    </ul>
-    <h3>Watch Items</h3>
-    <ul class="">
-        {{range .Watches}}
-        <li><b>{{.Repo}} :: {{.Name}}</b>
+    <div class="grid">
+        <div class="col">
+            {{ $len := len .PullRequests }}{{if ne $len 0}}
+            <h3>Pull Requests</h3>
             <ul>
-                {{range .Data.Search.Edges}}
-                <li>{{.Node.Title}}</li>
+                {{range .PullRequests}}
+                <li>{{.Repo}} {{.Number}} ( {{.ID}} )</li>
                 {{end}}
             </ul>
-        </li>
-        {{end}}
-    </ul>
-    <dialog open>
-        <article>
-            <h3>Add Watch Item</h3>
-            <p>
-                <input type="text"/>
-            </p>
-            <footer>
-                <a href="#cancel" role="button" class="secondary">Cancel</a>
-                <a href="#confirm" role="button">Add</a>
-            </footer>
-        </article>
-    </dialog>
+            {{end}}
+        </div>
+        <div class="col">
+            {{ $len := len .Watches }}{{if ne $len 0}}
+            <h3>Watch Items</h3>
+            <ul class="">
+                {{range .Watches}}
+                <li><b>{{.Repo}} :: {{.Name}}</b>
+                    <ul>
+                        {{range .Data.Search.Edges}}
+                        <li><b><a href="{{.Node.URL}}">{{.Node.Number}}</a></b> :: <span>+</span> <span>-</span> ::
+                            {{.Node.Title}}
+                        </li>
+                        {{end}}
+                    </ul>
+                </li>
+                {{end}}
+            </ul>
+            {{end}}
+        </div>
+        <div class="col">
+            {{ $len := len .Links }}{{if ne $len 0}}
+            <div class="icon-grid">
+                {{range .Links}}
+                <div>
+                    <a href="{{.Url}}">
+                        <div class="icon">
+                            <header>
+                                <img src="/icons/{{.ID}}"/>
+                            </header>
+                            {{.Name}}
+                        </div>
+                    </a>
+                </div>
+                {{end}}
+            </div>
+            {{end}}
+        </div>
+    </div>
 </main>
-<footer>Remaining queries: {{.CurrentLimits.Remaining}}</footer>
+<footer>
+    <div>
+        <details>
+            <summary>Add Link</summary>
+            <div class="icon-grid">
+                <label for="name">
+                    Link Name
+                    <input id="linkname" type="text" name="name" required>
+                </label>
+                <label for="url">
+                    URL
+                    <input id="linkurl" type="text" name="url" placeholder="https://..." required>
+                </label>
+                <label for="logourl">
+                    Logo URL
+                    <input id="logourl" type="text" name="logourl" placeholder="https://..." required>
+                </label>
+            </div>
+            <button onclick="sendLinkData(); return false;">Add</button>
+        </details>
+        <details>
+            <summary>Add Watch Item</summary>
+            <div class="icon-grid">
+                <label for="watchname">
+                    Name to watch for
+                    <input id="watchname" type="text" name="name" required>
+                </label>
+                <label for="watchrepo">
+                    Repository
+                    <input id="watchrepo" type="text" name="repo" placeholder="NixOS/nixpkgs" required>
+                </label>
+            </div>
+            <button onclick="sendWatchData(); return false;">Add</button>
+        </details>
+        <details>
+            <summary>Add Pull Request</summary>
+            <div class="icon-grid">
+                <label for="number">
+                    Number
+                    <input id="number" type="text" name="number" required>
+                </label>
+                <label for="watchrepo">
+                    Repository
+                    <input id="repo" type="text" name="repo" placeholder="NixOS/nixpkgs" required>
+                </label>
+                <label for="descr">
+                    Description
+                    <input id="descr" type="text" name="descr" placeholder="..." required>
+                </label>
+            </div>
+            <button onclick="sendPRData(); return false;">Add</button>
+        </details>
+    </div>
+</footer>
+<script src="assets/main.js" type="application/javascript"></script>
 </body>
 </html>

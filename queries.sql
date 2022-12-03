@@ -17,8 +17,8 @@ from watch_items
 where owner_id = ?;
 
 -- name: AddWatchItem :one
-insert into watch_items (owner_id, name, repo, descr)
-values (?, ?, ?, ?) returning *;
+insert into watch_items (owner_id, name, repo)
+values (?, ?, ?) returning *;
 
 -- name: DeleteWatchItem :exec
 delete
@@ -26,10 +26,14 @@ from watch_items
 where id = ?
   and owner_id = ?;
 
--- name: GetAllLinks :many
+-- name: GetAllLinksForOwner :many
 select *
 from links
 where owner_id = ?;
+
+-- name: GetAllLinks :many
+select *
+from links;
 
 -- name: AddLink :one
 insert into links (owner_id, url, name, logo_url)
@@ -46,9 +50,17 @@ select *
 from icons
 where owner_id = ?;
 
--- name: AddIcon :one
-insert into icons (owner_id, url, content_type, data)
-values (?, ?, ?, ?) returning *;
+-- name: GetIconByLinkID :one
+select *
+from icons
+where owner_id = ?
+  and link_id = ?;
+
+-- name: AddIcon :exec
+insert
+into icons (owner_id, link_id, content_type, data)
+values (?, ?, ?, ?) on conflict(link_id) do
+update set data = excluded.data, content_type = excluded.content_type;
 
 -- name: GetAllPullRequests :many
 select *

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -11,6 +12,8 @@ import (
 	"github.com/go-chi/render"
 	"suah.dev/gostart/data"
 )
+
+// TODO: make this more generic.
 
 func OwnerCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -23,6 +26,27 @@ func OwnerCtx(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), "ownerid", ownerID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func iconGET(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	ownerID, ok := ctx.Value("ownerid").(int64)
+	if !ok {
+		http.Error(w, http.StatusText(422), 422)
+		return
+	}
+	linkID, err := strconv.Atoi(chi.URLParam(r, "linkID"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	icon, err := app.queries.GetIconByLinkID(ctx, data.GetIconByLinkIDParams{
+		LinkID:  int64(linkID),
+		OwnerID: ownerID,
+	})
+	w.Header().Add("Content-type", icon.ContentType)
+	w.WriteHeader(200)
+	_, err = w.Write(icon.Data)
 }
 
 func watchitemGET(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +76,65 @@ func watchitemGET(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func watchitemDELETE(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	ownerID, ok := ctx.Value("ownerid").(int64)
+	if !ok {
+		http.Error(w, http.StatusText(422), 422)
+		return
+	}
+	watchID, err := strconv.Atoi(chi.URLParam(r, "watchID"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	err = app.queries.DeleteWatchItem(app.ctx, data.DeleteWatchItemParams{ID: int64(watchID), OwnerID: ownerID})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func watchitemPOST(w http.ResponseWriter, r *http.Request) {
+	d := &data.AddWatchItemParams{}
+	if err := render.Decode(r, d); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	ctx := r.Context()
+	ownerID, ok := ctx.Value("ownerid").(int64)
+	if !ok {
+		http.Error(w, http.StatusText(422), 422)
+		return
+	}
+
+	d.OwnerID = ownerID
+
+	_, err := app.queries.AddWatchItem(app.ctx, *d)
+	if err != nil {
+		http.Error(w, http.StatusText(422), 422)
+		return
+	}
+}
+
 func pullrequestsPOST(w http.ResponseWriter, r *http.Request) {
+	d := &data.AddPullRequestParams{}
+	if err := render.Decode(r, d); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	ctx := r.Context()
+	ownerID, ok := ctx.Value("ownerid").(int64)
+	if !ok {
+		http.Error(w, http.StatusText(422), 422)
+		return
+	}
+
+	d.OwnerID = ownerID
+
+	_, err := app.queries.AddPullRequest(app.ctx, *d)
+	if err != nil {
+		http.Error(w, http.StatusText(422), 422)
+		return
+	}
 }
 
 func pullrequestsDELETE(w http.ResponseWriter, r *http.Request) {
@@ -109,7 +191,7 @@ func linksGET(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(422), 422)
 		return
 	}
-	links, err := app.queries.GetAllLinks(app.ctx, ownerID)
+	links, err := app.queries.GetAllLinksForOwner(app.ctx, ownerID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -144,10 +226,29 @@ func linksPOST(w http.ResponseWriter, r *http.Request) {
 
 	d.OwnerID = ownerID
 
+	fmt.Printf("\n\n%#v\n\n", d)
+
 	_, err := app.queries.AddLink(app.ctx, *d)
 	if err != nil {
 		http.Error(w, http.StatusText(422), 422)
 		return
+	}
+}
+
+func linkDELETE(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	ownerID, ok := ctx.Value("ownerid").(int64)
+	if !ok {
+		http.Error(w, http.StatusText(422), 422)
+		return
+	}
+	linkID, err := strconv.Atoi(chi.URLParam(r, "linkID"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	err = app.queries.DeleteLink(app.ctx, data.DeleteLinkParams{ID: int64(linkID), OwnerID: ownerID})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -164,7 +265,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	dbCtx := context.Background()
-	links, err := app.queries.GetAllLinks(dbCtx, ownerID)
+	links, err := app.queries.GetAllLinksForOwner(dbCtx, ownerID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

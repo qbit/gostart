@@ -10,27 +10,28 @@ import (
 )
 
 type Icon struct {
-	ID          int64     `json:"id"`
 	OwnerID     int64     `json:"owner_id"`
+	LinkID      int64     `json:"link_id"`
 	CreatedAt   time.Time `json:"created_at"`
-	Url         string    `json:"url"`
 	ContentType string    `json:"content_type"`
 	Data        []byte    `json:"data"`
 }
 
 type Link struct {
-	ID        int64          `json:"id"`
-	OwnerID   int64          `json:"owner_id"`
-	CreatedAt time.Time      `json:"created_at"`
-	Url       string         `json:"url"`
-	Name      string         `json:"name"`
-	LogoUrl   sql.NullString `json:"logo_url"`
+	ID        int64     `json:"id"`
+	OwnerID   int64     `json:"owner_id"`
+	CreatedAt time.Time `json:"created_at"`
+	Url       string    `json:"url"`
+	Name      string    `json:"name"`
+	Clicked   int64     `json:"clicked"`
+	LogoUrl   string    `json:"logo_url"`
 }
 
 type Owner struct {
-	ID        int64        `json:"id"`
-	CreatedAt sql.NullTime `json:"created_at"`
-	Name      string       `json:"name"`
+	ID        int64     `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	LastUsed  time.Time `json:"last_used"`
+	Name      string    `json:"name"`
 }
 
 type PullRequest struct {
@@ -39,7 +40,7 @@ type PullRequest struct {
 	CreatedAt   time.Time      `json:"created_at"`
 	Number      int64          `json:"number"`
 	Repo        string         `json:"repo"`
-	Description sql.NullString `json:"description"`
+	Description string         `json:"description"`
 	Commitid    sql.NullString `json:"commitid"`
 }
 
@@ -52,10 +53,9 @@ type PullRequestIgnore struct {
 }
 
 type WatchItem struct {
-	ID        int64          `json:"id"`
-	OwnerID   int64          `json:"owner_id"`
-	CreatedAt time.Time      `json:"created_at"`
-	Name      string         `json:"name"`
-	Repo      string         `json:"repo"`
-	Descr     sql.NullString `json:"descr"`
+	ID        int64     `json:"id"`
+	OwnerID   int64     `json:"owner_id"`
+	CreatedAt time.Time `json:"created_at"`
+	Name      string    `json:"name"`
+	Repo      string    `json:"repo"`
 }

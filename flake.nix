@@ -32,7 +32,7 @@
               PS1='\u@\h:\@; '
               echo "Go `${pkgs.go}/bin/go version`"
             '';
-            nativeBuildInputs = with pkgs; [ git go gopls go-tools sqlc sqlite esbuild yarn ];
+            nativeBuildInputs = with pkgs; [ git go gopls go-tools sqlc sqlite rlwrap nodePackages.typescript ];
           };
         });
     };
