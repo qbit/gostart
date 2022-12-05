@@ -158,8 +158,13 @@ func main() {
 				log.Println(err)
 				continue
 			}
-			defer resp.Body.Close()
+
 			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			err = resp.Body.Close()
 			if err != nil {
 				log.Println(err)
 				continue

@@ -332,8 +332,6 @@ func index(w http.ResponseWriter, r *http.Request) {
 		template.New("").Funcs(templateFuncs).ParseFS(templates, "templates/main.html"),
 	)
 
-	//tmpl = tmpl.Funcs(templateFuncs)
-
 	err = tmpl.ExecuteTemplate(w, "main.html", stuff)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
