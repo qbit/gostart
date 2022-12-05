@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"sort"
 	"time"
@@ -80,7 +81,12 @@ func getData(q GQLQuery, token string) (*WatchResult, error) {
 		return nil, err
 	}
 
-	defer res.Body.Close()
+	defer func() {
+		err := res.Body.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	if err = json.NewDecoder(res.Body).Decode(re); err != nil {
 		return nil, err
@@ -96,6 +102,7 @@ type Page struct {
 	Node          tailcfg.Node
 	Watches       WatchResults
 	CurrentLimits *RateLimit
+	Ignores       []data.PullRequestIgnore
 }
 
 func (p *Page) Sort() {
@@ -117,9 +124,9 @@ func (p *Page) Sort() {
 
 type WatchResults []WatchResult
 
-func (w WatchResults) forID(ownerID int64) WatchResults {
+func (w *WatchResults) forID(ownerID int64) WatchResults {
 	newResults := WatchResults{}
-	for _, r := range w {
+	for _, r := range *w {
 		if r.OwnerID == ownerID {
 			newResults = append(newResults, r)
 		}
@@ -186,6 +193,7 @@ type Search struct {
 	IssueCount int     `json:"issueCount,omitempty"`
 	Edges      []Edges `json:"edges,omitempty"`
 }
+
 type RateLimit struct {
 	Remaining int       `json:"remaining,omitempty"`
 	ResetAt   time.Time `json:"resetAt,omitempty"`

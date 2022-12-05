@@ -49,6 +49,7 @@ function postData(path, data) {
                     if (response.ok) {
                         console.log("added");
                     }
+                    location.reload();
                     return [2 /*return*/, response];
             }
         });
@@ -127,6 +128,23 @@ function sendPRData() {
                     data.Number = parseInt(pd.value, 10);
                     data.Description = pd.value;
                     return [4 /*yield*/, postData('/pullrequests', data)];
+                case 1:
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+function addIgnore(number, repo) {
+    return __awaiter(this, void 0, void 0, function () {
+        var data;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    data = {};
+                    data.Number = number;
+                    data.Repo = repo;
+                    return [4 /*yield*/, postData('/prignores', data)];
                 case 1:
                     _a.sent();
                     return [2 /*return*/];

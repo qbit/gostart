@@ -41,6 +41,6 @@ func (a *App) getOwner(r *http.Request) (*tailcfg.Node, error) {
 			log.Fatal(err)
 		}
 	}
-	
+
 	return who.Node, nil
 }

@@ -1,6 +1,5 @@
 <html lang="en">
 <head>
-    <!--    <link rel="stylesheet" href="assets/pico.css">-->
     <style>
         .icon {
             cursor: pointer;
@@ -43,6 +42,10 @@
         main {
             padding: 5px !important;
         }
+
+        ul li span {
+            cursor: pointer;
+        }
     </style>
     <title>{{.Title}}::{{.Node.ComputedName}}</title>
 </head>
@@ -71,9 +74,16 @@
                 <li><b>{{.Repo}} :: {{.Name}}</b>
                     <ul>
                         {{range .Data.Search.Edges}}
-                        <li><b><a href="{{.Node.URL}}">{{.Node.Number}}</a></b> :: <span>+</span> <span>-</span> ::
+                        {{if includeWatch .Node.Repository.NameWithOwner .Node.Number $.Ignores}}
+                        <li>
+                            <b>
+                                <a href="{{.Node.URL}}">{{.Node.Number}}</a>
+                            </b> ::
+                            <span>⊕</span>
+                            <span onclick="addIgnore({{.Node.Number}}, '{{.Node.Repository.NameWithOwner}}')">⦸</span> ::
                             {{.Node.Title}}
                         </li>
+                        {{end}}
                         {{end}}
                     </ul>
                 </li>
@@ -89,6 +99,7 @@
                     <a href="{{.Url}}">
                         <div class="icon">
                             <header>
+                                <!-- TODO: make this not ghetto -->
                                 <img src="/icons/{{.ID}}"/>
                             </header>
                             {{.Name}}

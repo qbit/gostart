@@ -43,6 +43,9 @@ async function postData(path: string, data: Link|PullRequest|WatchItem|PullReque
     if (response.ok) {
         console.log("added")
     }
+
+    location.reload();
+
     return response
 }
 
@@ -87,4 +90,11 @@ async function sendPRData() {
     data.Number = parseInt(pd.value, 10);
     data.Description = pd.value;
     await postData('/pullrequests', data);
+}
+
+async function addIgnore(number, repo: string) {
+    let data = {} as PullRequestIgnore;
+    data.Number = number;
+    data.Repo = repo;
+    await postData('/prignores', data);
 }

@@ -18,7 +18,8 @@
             version = "v0.0.0";
             src = ./.;
 
-            vendorSha256 = "sha256-RNhu1gQ62Hg8Fhiw9uIS+b4YaAHtZMaqbelMKv+oZjM=";
+            vendorSha256 =
+              "sha256-aW7Ysx6ovAskiNHlnmmK3VsgeO+VYJYjXitVCPfSS9k=";
             proxyVendor = true;
           };
         });
@@ -32,7 +33,16 @@
               PS1='\u@\h:\@; '
               echo "Go `${pkgs.go}/bin/go version`"
             '';
-            nativeBuildInputs = with pkgs; [ git go gopls go-tools sqlc sqlite rlwrap nodePackages.typescript ];
+            nativeBuildInputs = with pkgs; [
+              git
+              go
+              gopls
+              go-tools
+              sqlc
+              sqlite
+              rlwrap
+              nodePackages.typescript
+            ];
           };
         });
     };

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -226,9 +225,29 @@ func linksPOST(w http.ResponseWriter, r *http.Request) {
 
 	d.OwnerID = ownerID
 
-	fmt.Printf("\n\n%#v\n\n", d)
-
 	_, err := app.queries.AddLink(app.ctx, *d)
+	if err != nil {
+		http.Error(w, http.StatusText(422), 422)
+		return
+	}
+}
+
+func prignorePOST(w http.ResponseWriter, r *http.Request) {
+	d := &data.AddPullRequestIgnoreParams{}
+	if err := render.Decode(r, d); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	ctx := r.Context()
+	ownerID, ok := ctx.Value("ownerid").(int64)
+	if !ok {
+		http.Error(w, http.StatusText(422), 422)
+		return
+	}
+
+	d.OwnerID = ownerID
+
+	_, err := app.queries.AddPullRequestIgnore(app.ctx, *d)
 	if err != nil {
 		http.Error(w, http.StatusText(422), 422)
 		return
@@ -250,6 +269,17 @@ func linkDELETE(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+var templateFuncs = template.FuncMap{
+	"includeWatch": func(repo string, number int, ignoreList []data.PullRequestIgnore) bool {
+		for _, pri := range ignoreList {
+			if pri.Repo == repo && pri.Number == int64(number) {
+				return false
+			}
+		}
+		return true
+	},
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
@@ -280,6 +310,12 @@ func index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ignores, err := app.queries.GetAllPullRequestIgnores(ctx, ownerID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	stuff := &Page{
 		Node:          *owner,
 		Title:         "StartPage",
@@ -287,12 +323,18 @@ func index(w http.ResponseWriter, r *http.Request) {
 		PullRequests:  prs,
 		Watches:       app.watches.forID(ownerID),
 		CurrentLimits: app.watches.GetLimits(),
+		Ignores:       ignores,
 	}
 
 	stuff.Sort()
 
-	tmpl := template.Must(template.ParseFS(templates, "templates/main.html"))
-	err = tmpl.Execute(w, stuff)
+	tmpl := template.Must(
+		template.New("").Funcs(templateFuncs).ParseFS(templates, "templates/main.html"),
+	)
+
+	//tmpl = tmpl.Funcs(templateFuncs)
+
+	err = tmpl.ExecuteTemplate(w, "main.html", stuff)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

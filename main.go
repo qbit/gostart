@@ -119,6 +119,10 @@ func main() {
 		r.Delete("/{watchID:[0-9]+}", watchitemDELETE)
 		r.Post("/", watchitemPOST)
 	})
+	r.Route("/prignores", func(r chi.Router) {
+		r.Use(render.SetContentType(render.ContentTypeJSON))
+		r.Post("/", prignorePOST)
+	})
 	r.Route("/icons", func(r chi.Router) {
 		r.Get("/{linkID:[0-9]+}", iconGET)
 	})
