@@ -42,10 +42,10 @@ async function postData(path: string, data: Link|PullRequest|WatchItem|PullReque
         headers: {'Content-Type': 'application/json; charset=UTF-8'}
     });
     if (response.ok) {
-        console.log("added")
+        location.reload();
+    } else {
+        alert("someting is broken: " + response.status)
     }
-
-    location.reload();
 
     return response
 }

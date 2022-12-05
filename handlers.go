@@ -1,15 +1,22 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
-	"html/template"
-	"net/http"
-	"strconv"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/basicfont"
+	"golang.org/x/image/math/fixed"
+	"html/template"
+	"image"
+	"image/color"
+	"image/png"
+	"net/http"
+	"strconv"
 	"suah.dev/gostart/data"
+	"unicode"
 )
 
 // TODO: make this more generic.
@@ -37,12 +44,51 @@ func iconGET(w http.ResponseWriter, r *http.Request) {
 	linkID, err := strconv.Atoi(chi.URLParam(r, "linkID"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	link, err := app.queries.GetLinkByID(ctx, int64(linkID))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	icon, err := app.queries.GetIconByLinkID(ctx, data.GetIconByLinkIDParams{
 		LinkID:  int64(linkID),
 		OwnerID: ownerID,
 	})
+
+	if err != nil {
+		size := 24
+		img := image.NewRGBA(image.Rect(0, 0, size, size))
+		co := color.RGBA{0, 0, 0, 255}
+		point := fixed.Point26_6{
+			fixed.I(size/2 - basicfont.Face7x13.Width),
+			fixed.I(size / 2),
+		}
+		d := &font.Drawer{
+			Dst:  img,
+			Src:  image.NewUniform(co),
+			Face: basicfont.Face7x13,
+			Dot:  point,
+		}
+
+		r := []rune(link.Name)
+		l := string(unicode.ToUpper(r[0]))
+
+		d.DrawString(l)
+
+		buf := new(bytes.Buffer)
+
+		if err := png.Encode(buf, img); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		} else {
+			icon.Data = buf.Bytes()
+			icon.ContentType = "image/png"
+		}
+	}
+
 	w.Header().Add("Content-type", icon.ContentType)
 	w.WriteHeader(200)
 	_, err = w.Write(icon.Data)

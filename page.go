@@ -84,7 +84,7 @@ func getData(q GQLQuery, token string) (*WatchResult, error) {
 	defer func() {
 		err := res.Body.Close()
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("can't close body: ", err)
 		}
 	}()
 

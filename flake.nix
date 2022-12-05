@@ -19,7 +19,7 @@
             src = ./.;
 
             vendorSha256 =
-              "sha256-aW7Ysx6ovAskiNHlnmmK3VsgeO+VYJYjXitVCPfSS9k=";
+              "sha256-k2WVSfW/5yayEpdfNdYq22hKxP7/7qbY/d+VYLAWtyQ=";
             proxyVendor = true;
           };
         });

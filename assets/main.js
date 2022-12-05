@@ -47,9 +47,11 @@ function postData(path, data) {
                 case 1:
                     response = _a.sent();
                     if (response.ok) {
-                        console.log("added");
+                        location.reload();
                     }
-                    location.reload();
+                    else {
+                        alert("someting is broken: " + response.status);
+                    }
                     return [2 /*return*/, response];
             }
         });

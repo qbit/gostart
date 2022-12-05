@@ -47,7 +47,7 @@ func main() {
 
 	db, err := sql.Open("sqlite", fmt.Sprintf("%s?cache=shared&mode=rwc", *dbFile))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("can't open database: ", err)
 	}
 
 	app.queries = data.New(db)
@@ -56,7 +56,7 @@ func main() {
 	}
 	app.tsLocalClient, err = app.tsServer.LocalClient()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("can't get ts local client: ", err)
 	}
 	app.watches = &WatchResults{}
 
@@ -66,7 +66,7 @@ func main() {
 		if _, err := os.Stat(*dbFile); os.IsNotExist(err) {
 			log.Println("Creating database..")
 			if _, err := db.ExecContext(app.ctx, schema); err != nil {
-				log.Fatal(err)
+				log.Fatal("can't create database schema: ", err)
 			}
 		}
 	}
@@ -74,20 +74,20 @@ func main() {
 	if *key != "" {
 		keyData, err := os.ReadFile(*key)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("can't read key file: ", err)
 		}
 		app.tsServer.AuthKey = string(keyData)
 	}
 
 	ln, err := app.tsServer.Listen("tcp", ":443")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("can't listen: ", err)
 	}
 
 	defer func() {
 		err := app.tsServer.Close()
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("can't close ts server: ", err)
 		}
 	}()
 
@@ -132,7 +132,7 @@ func main() {
 	if *tokenFile != "" && ghToken == "" {
 		tfBytes, err := os.ReadFile(*tokenFile)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("can't read token file: ", err)
 		}
 		ghToken = string(tfBytes)
 	}
@@ -140,7 +140,7 @@ func main() {
 	go func() {
 		err := app.watches.Update(ghToken)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("can't update watches: ", err)
 		}
 		time.Sleep(5 * time.Minute)
 	}()
@@ -148,11 +148,14 @@ func main() {
 	go func() {
 		links, err := app.queries.GetAllLinks(app.ctx)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("can't get links: ", err)
 		}
 
 		for _, link := range links {
 			fmt.Println(link.LogoUrl)
+			if link.LogoUrl == "" {
+				continue
+			}
 			resp, err := http.Get(link.LogoUrl)
 			if err != nil {
 				log.Println(err)
@@ -178,7 +181,7 @@ func main() {
 				Data:        body,
 			})
 			if err != nil {
-				log.Fatal(err)
+				log.Fatal("can't add icon: ", err)
 
 			}
 		}

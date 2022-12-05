@@ -39,6 +39,9 @@ from links;
 insert into links (owner_id, url, name, logo_url)
 values (?, ?, ?, ?) returning *;
 
+-- name: GetLinkByID :one
+select * from links where id = ?;
+
 -- name: DeleteLink :exec
 delete
 from links

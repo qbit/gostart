@@ -496,6 +496,25 @@ func (q *Queries) GetIconByLinkID(ctx context.Context, arg GetIconByLinkIDParams
 	return i, err
 }
 
+const getLinkByID = `-- name: GetLinkByID :one
+select id, owner_id, created_at, url, name, clicked, logo_url from links where id = ?
+`
+
+func (q *Queries) GetLinkByID(ctx context.Context, id int64) (Link, error) {
+	row := q.db.QueryRowContext(ctx, getLinkByID, id)
+	var i Link
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.CreatedAt,
+		&i.Url,
+		&i.Name,
+		&i.Clicked,
+		&i.LogoUrl,
+	)
+	return i, err
+}
+
 const getOwner = `-- name: GetOwner :one
 select id, created_at, last_used, name
 from owners
