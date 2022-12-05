@@ -40,6 +40,7 @@ type PullRequest struct {
 	CreatedAt   time.Time      `json:"created_at"`
 	Number      int64          `json:"number"`
 	Repo        string         `json:"repo"`
+	Url         string         `json:"url"`
 	Description string         `json:"description"`
 	Commitid    sql.NullString `json:"commitid"`
 }

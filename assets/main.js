@@ -125,7 +125,7 @@ function sendPRData() {
                     pd = document.getElementById("descr");
                     data = {};
                     data.Repo = pr.value;
-                    data.Number = parseInt(pd.value, 10);
+                    data.Number = parseInt(pn.value, 10);
                     data.Description = pd.value;
                     return [4 /*yield*/, postData('/pullrequests', data)];
                 case 1:
@@ -145,6 +145,25 @@ function addIgnore(number, repo) {
                     data.Number = number;
                     data.Repo = repo;
                     return [4 /*yield*/, postData('/prignores', data)];
+                case 1:
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+function addPR(number, repo, descr, url) {
+    return __awaiter(this, void 0, void 0, function () {
+        var data;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    data = {};
+                    data.Number = number;
+                    data.Repo = repo;
+                    data.Description = descr;
+                    data.Url = url;
+                    return [4 /*yield*/, postData('/pullrequests', data)];
                 case 1:
                     _a.sent();
                     return [2 /*return*/];

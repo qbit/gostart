@@ -88,8 +88,8 @@ func (q *Queries) AddOwner(ctx context.Context, arg AddOwnerParams) (Owner, erro
 }
 
 const addPullRequest = `-- name: AddPullRequest :one
-insert into pull_requests (owner_id, number, repo, description)
-values (?, ?, ?, ?) returning id, owner_id, created_at, number, repo, description, commitid
+insert into pull_requests (owner_id, number, repo, description, url)
+values (?, ?, ?, ?, ?) returning id, owner_id, created_at, number, repo, url, description, commitid
 `
 
 type AddPullRequestParams struct {
@@ -97,6 +97,7 @@ type AddPullRequestParams struct {
 	Number      int64  `json:"number"`
 	Repo        string `json:"repo"`
 	Description string `json:"description"`
+	Url         string `json:"url"`
 }
 
 func (q *Queries) AddPullRequest(ctx context.Context, arg AddPullRequestParams) (PullRequest, error) {
@@ -105,6 +106,7 @@ func (q *Queries) AddPullRequest(ctx context.Context, arg AddPullRequestParams) 
 		arg.Number,
 		arg.Repo,
 		arg.Description,
+		arg.Url,
 	)
 	var i PullRequest
 	err := row.Scan(
@@ -113,6 +115,7 @@ func (q *Queries) AddPullRequest(ctx context.Context, arg AddPullRequestParams) 
 		&i.CreatedAt,
 		&i.Number,
 		&i.Repo,
+		&i.Url,
 		&i.Description,
 		&i.Commitid,
 	)
@@ -362,21 +365,13 @@ func (q *Queries) GetAllPullRequestIgnores(ctx context.Context, ownerID int64) (
 }
 
 const getAllPullRequests = `-- name: GetAllPullRequests :many
-select id, owner_id, created_at, number, repo, description, commitid
+select id, owner_id, created_at, number, repo, url, description, commitid
 from pull_requests
-where number not in (select number
-                     from pull_request_ignores
-                     where pull_request_ignores.owner_id = ?)
-  and pull_requests.owner_id = ?
+where owner_id = ?
 `
 
-type GetAllPullRequestsParams struct {
-	OwnerID   int64 `json:"owner_id"`
-	OwnerID_2 int64 `json:"owner_id_2"`
-}
-
-func (q *Queries) GetAllPullRequests(ctx context.Context, arg GetAllPullRequestsParams) ([]PullRequest, error) {
-	rows, err := q.db.QueryContext(ctx, getAllPullRequests, arg.OwnerID, arg.OwnerID_2)
+func (q *Queries) GetAllPullRequests(ctx context.Context, ownerID int64) ([]PullRequest, error) {
+	rows, err := q.db.QueryContext(ctx, getAllPullRequests, ownerID)
 	if err != nil {
 		return nil, err
 	}
@@ -390,6 +385,7 @@ func (q *Queries) GetAllPullRequests(ctx context.Context, arg GetAllPullRequests
 			&i.CreatedAt,
 			&i.Number,
 			&i.Repo,
+			&i.Url,
 			&i.Description,
 			&i.Commitid,
 		); err != nil {

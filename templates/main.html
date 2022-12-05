@@ -64,7 +64,7 @@
             <h3>Pull Requests</h3>
             <ul>
                 {{range .PullRequests}}
-                <li>{{.Repo}} {{.Number}} ( {{.ID}} )</li>
+                <li><b><a href="{{.Url}}">{{.Repo}} {{.Number}}</a></b> :: {{.Description}}</li>
                 {{end}}
             </ul>
             {{end}}
@@ -82,7 +82,7 @@
                             <b>
                                 <a href="{{.Node.URL}}">{{.Node.Number}}</a>
                             </b> ::
-                            <span>⊕</span>
+                            <span onclick="addPR({{.Node.Number}}, '{{.Node.Repository.NameWithOwner}}', '{{.Node.Title}}', '{{.Node.URL}}')">⊕</span>
                             <span onclick="addIgnore({{.Node.Number}}, '{{.Node.Repository.NameWithOwner}}')">⦸</span> ::
                             {{.Node.Title}}
                         </li>

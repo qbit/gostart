@@ -160,10 +160,7 @@ func pullrequestsGET(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(422), 422)
 		return
 	}
-	prs, err := app.queries.GetAllPullRequests(app.ctx, data.GetAllPullRequestsParams{
-		OwnerID:   ownerID,
-		OwnerID_2: ownerID,
-	})
+	prs, err := app.queries.GetAllPullRequests(app.ctx, ownerID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -301,10 +298,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	prs, err := app.queries.GetAllPullRequests(dbCtx, data.GetAllPullRequestsParams{
-		OwnerID:   ownerID,
-		OwnerID_2: ownerID,
-	})
+	prs, err := app.queries.GetAllPullRequests(dbCtx, ownerID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

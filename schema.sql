@@ -40,6 +40,7 @@ create table pull_requests
     created_at  datetime default current_timestamp not null,
     number      integer                            not null unique,
     repo        text                               not null,
+    url         text                               not null,
     description text                               not null,
     commitid    text
 );

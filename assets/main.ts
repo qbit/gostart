@@ -12,6 +12,7 @@ interface PullRequest {
     CreatedAt: Date
     Number: number
     Repo: string
+    Url: string
     Description: string|null
     Commitid: string|null
 }
@@ -87,7 +88,7 @@ async function sendPRData() {
     const pd = document.getElementById("descr") as HTMLInputElement;
     let data = {} as PullRequest;
     data.Repo = pr.value;
-    data.Number = parseInt(pd.value, 10);
+    data.Number = parseInt(pn.value, 10);
     data.Description = pd.value;
     await postData('/pullrequests', data);
 }
@@ -97,4 +98,13 @@ async function addIgnore(number, repo: string) {
     data.Number = number;
     data.Repo = repo;
     await postData('/prignores', data);
+}
+
+async function addPR(number, repo, descr, url: string) {
+    let data = {} as PullRequest;
+    data.Number = number;
+    data.Repo = repo;
+    data.Description = descr;
+    data.Url = url;
+    await postData('/pullrequests', data);
 }

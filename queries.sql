@@ -65,14 +65,11 @@ update set data = excluded.data, content_type = excluded.content_type;
 -- name: GetAllPullRequests :many
 select *
 from pull_requests
-where number not in (select number
-                     from pull_request_ignores
-                     where pull_request_ignores.owner_id = ?)
-  and pull_requests.owner_id = ?;
+where owner_id = ?;
 
 -- name: AddPullRequest :one
-insert into pull_requests (owner_id, number, repo, description)
-values (?, ?, ?, ?) returning *;
+insert into pull_requests (owner_id, number, repo, description, url)
+values (?, ?, ?, ?, ?) returning *;
 
 -- name: DeletePullRequest :exec
 delete
