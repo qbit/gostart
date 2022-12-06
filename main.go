@@ -123,6 +123,7 @@ func main() {
 		r.Post("/", prignorePOST)
 	})
 	r.Route("/icons", func(r chi.Router) {
+		r.Use(IconCacher)
 		r.Get("/{linkID:[0-9]+}", iconGET)
 	})
 

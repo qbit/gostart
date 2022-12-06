@@ -42,6 +42,13 @@ func OwnerCtx(next http.Handler) http.Handler {
 	})
 }
 
+func IconCacher(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "max-age=604800")
+		next.ServeHTTP(w, r)
+	})
+}
+
 func iconGET(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	ownerID, ok := ctx.Value(ownerKey).(int64)
