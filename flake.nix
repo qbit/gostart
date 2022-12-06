@@ -11,7 +11,7 @@
       nixpkgsFor = forAllSystems (system: import nixpkgs { inherit system; });
     in {
       overlay = final: prev: {
-        startpage = self.packages.${prev.system}.startpage;
+        gostart = self.packages.${prev.system}.gostart;
       };
       nixosModule = import ./module.nix;
       packages = forAllSystems (system:

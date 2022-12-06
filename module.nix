@@ -33,7 +33,7 @@ in {
         type = types.path;
         default = "";
         description = ''
-          Path to the TS API key file
+          Path to the GitHub API key file
         '';
       };
 
