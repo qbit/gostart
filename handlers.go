@@ -21,6 +21,14 @@ import (
 
 // TODO: make this more generic.
 
+type ctxKey string
+
+func (c ctxKey) String() string {
+	return string(c)
+}
+
+const ownerKey = ctxKey("ownerid")
+
 func OwnerCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		owner, err := app.getOwner(r)
@@ -29,16 +37,16 @@ func OwnerCtx(next http.Handler) http.Handler {
 			return
 		}
 		ownerID := int64(owner.ID)
-		ctx := context.WithValue(r.Context(), "ownerid", ownerID)
+		ctx := context.WithValue(r.Context(), ownerKey, ownerID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
 func iconGET(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	ownerID, ok := ctx.Value("ownerid").(int64)
+	ownerID, ok := ctx.Value(ownerKey).(int64)
 	if !ok {
-		http.Error(w, http.StatusText(422), 422)
+		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
 	}
 	linkID, err := strconv.Atoi(chi.URLParam(r, "linkID"))
@@ -91,14 +99,14 @@ func iconGET(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-type", icon.ContentType)
 	w.WriteHeader(200)
-	_, err = w.Write(icon.Data)
+	_, _ = w.Write(icon.Data)
 }
 
 func watchitemGET(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	ownerID, ok := ctx.Value("ownerid").(int64)
+	ownerID, ok := ctx.Value(ownerKey).(int64)
 	if !ok {
-		http.Error(w, http.StatusText(422), 422)
+		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
 	}
 	watches, err := app.queries.GetAllWatchItemsByOwner(app.ctx, ownerID)
@@ -123,9 +131,9 @@ func watchitemGET(w http.ResponseWriter, r *http.Request) {
 
 func watchitemDELETE(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	ownerID, ok := ctx.Value("ownerid").(int64)
+	ownerID, ok := ctx.Value(ownerKey).(int64)
 	if !ok {
-		http.Error(w, http.StatusText(422), 422)
+		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
 	}
 	watchID, err := strconv.Atoi(chi.URLParam(r, "watchID"))
@@ -145,9 +153,9 @@ func watchitemPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx := r.Context()
-	ownerID, ok := ctx.Value("ownerid").(int64)
+	ownerID, ok := ctx.Value(ownerKey).(int64)
 	if !ok {
-		http.Error(w, http.StatusText(422), 422)
+		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
 	}
 
@@ -155,7 +163,7 @@ func watchitemPOST(w http.ResponseWriter, r *http.Request) {
 
 	_, err := app.queries.AddWatchItem(app.ctx, *d)
 	if err != nil {
-		http.Error(w, http.StatusText(422), 422)
+		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		return
 	}
 }
@@ -167,9 +175,9 @@ func pullrequestsPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx := r.Context()
-	ownerID, ok := ctx.Value("ownerid").(int64)
+	ownerID, ok := ctx.Value(ownerKey).(int64)
 	if !ok {
-		http.Error(w, http.StatusText(422), 422)
+		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
 	}
 
@@ -177,16 +185,16 @@ func pullrequestsPOST(w http.ResponseWriter, r *http.Request) {
 
 	_, err := app.queries.AddPullRequest(app.ctx, *d)
 	if err != nil {
-		http.Error(w, http.StatusText(422), 422)
+		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		return
 	}
 }
 
 func pullrequestsDELETE(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	ownerID, ok := ctx.Value("ownerid").(int64)
+	ownerID, ok := ctx.Value(ownerKey).(int64)
 	if !ok {
-		http.Error(w, http.StatusText(422), 422)
+		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
 	}
 	prID, err := strconv.Atoi(chi.URLParam(r, "prID"))
@@ -201,9 +209,9 @@ func pullrequestsDELETE(w http.ResponseWriter, r *http.Request) {
 
 func pullrequestsGET(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	ownerID, ok := ctx.Value("ownerid").(int64)
+	ownerID, ok := ctx.Value(ownerKey).(int64)
 	if !ok {
-		http.Error(w, http.StatusText(422), 422)
+		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
 	}
 	prs, err := app.queries.GetAllPullRequests(app.ctx, ownerID)
@@ -228,9 +236,9 @@ func pullrequestsGET(w http.ResponseWriter, r *http.Request) {
 
 func linksGET(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	ownerID, ok := ctx.Value("ownerid").(int64)
+	ownerID, ok := ctx.Value(ownerKey).(int64)
 	if !ok {
-		http.Error(w, http.StatusText(422), 422)
+		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
 	}
 	links, err := app.queries.GetAllLinksForOwner(app.ctx, ownerID)
@@ -260,9 +268,9 @@ func linksPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx := r.Context()
-	ownerID, ok := ctx.Value("ownerid").(int64)
+	ownerID, ok := ctx.Value(ownerKey).(int64)
 	if !ok {
-		http.Error(w, http.StatusText(422), 422)
+		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
 	}
 
@@ -270,7 +278,7 @@ func linksPOST(w http.ResponseWriter, r *http.Request) {
 
 	_, err := app.queries.AddLink(app.ctx, *d)
 	if err != nil {
-		http.Error(w, http.StatusText(422), 422)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
@@ -282,9 +290,9 @@ func prignorePOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx := r.Context()
-	ownerID, ok := ctx.Value("ownerid").(int64)
+	ownerID, ok := ctx.Value(ownerKey).(int64)
 	if !ok {
-		http.Error(w, http.StatusText(422), 422)
+		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
 	}
 
@@ -292,16 +300,16 @@ func prignorePOST(w http.ResponseWriter, r *http.Request) {
 
 	_, err := app.queries.AddPullRequestIgnore(app.ctx, *d)
 	if err != nil {
-		http.Error(w, http.StatusText(422), 422)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
 func linkDELETE(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	ownerID, ok := ctx.Value("ownerid").(int64)
+	ownerID, ok := ctx.Value(ownerKey).(int64)
 	if !ok {
-		http.Error(w, http.StatusText(422), 422)
+		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
 	}
 	linkID, err := strconv.Atoi(chi.URLParam(r, "linkID"))
@@ -329,12 +337,12 @@ func index(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	owner, err := app.getOwner(r)
 	if err != nil {
-		http.Error(w, http.StatusText(422), 422)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	ownerID, ok := ctx.Value("ownerid").(int64)
+	ownerID, ok := ctx.Value(ownerKey).(int64)
 	if !ok {
-		http.Error(w, http.StatusText(422), 422)
+		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
 	}
 	dbCtx := context.Background()

@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"database/sql"
 	"embed"
-	_ "embed"
 	"flag"
 	"fmt"
 	"io"
