@@ -57,7 +57,6 @@ func main() {
 	if err != nil {
 		log.Fatal("can't get ts local client: ", err)
 	}
-	app.watches = &WatchResults{}
 
 	if *dbFile == ":memory:" {
 		tmpDBPopulate(db)
@@ -138,11 +137,15 @@ func main() {
 	}
 
 	go func() {
-		err := app.watches.Update(ghToken)
-		if err != nil {
-			log.Fatal("can't update watches: ", err)
+		for {
+			var err error
+			app.watches, err = UpdateWatches(ghToken)
+			if err != nil {
+				log.Fatal("can't update watches: ", err)
+			}
+			time.Sleep(5 * time.Minute)
 		}
-		time.Sleep(5 * time.Minute)
+
 	}()
 
 	go func() {

@@ -53,6 +53,16 @@ type PullRequestIgnore struct {
 	Repo      string    `json:"repo"`
 }
 
+type Todo struct {
+	OwnerID     int64        `json:"owner_id"`
+	LinkID      int64        `json:"link_id"`
+	CreatedAt   time.Time    `json:"created_at"`
+	CompletedAt sql.NullTime `json:"completed_at"`
+	Completed   bool         `json:"completed"`
+	Title       string       `json:"title"`
+	Body        string       `json:"body"`
+}
+
 type WatchItem struct {
 	ID        int64     `json:"id"`
 	OwnerID   int64     `json:"owner_id"`

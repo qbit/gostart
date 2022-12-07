@@ -100,9 +100,9 @@ type Page struct {
 	PullRequests  []data.PullRequest
 	Links         []data.Link
 	Node          tailcfg.Node
-	Watches       WatchResults
 	CurrentLimits *RateLimit
 	Ignores       []data.PullRequestIgnore
+	Watches       *WatchResults
 }
 
 func (p *Page) Sort() {
@@ -112,27 +112,21 @@ func (p *Page) Sort() {
 	sort.Slice(p.PullRequests, func(i, j int) bool {
 		return p.PullRequests[i].Number > p.PullRequests[j].Number
 	})
-	sort.Slice(p.Watches, func(i, j int) bool {
-		return p.Watches[i].Name < p.Watches[j].Name
-	})
-	for _, w := range p.Watches {
-		sort.Slice(w.Data.Search.Edges, func(i, j int) bool {
-			return w.Data.Search.Edges[i].Node.CreatedAt.After(w.Data.Search.Edges[j].Node.CreatedAt)
-		})
-	}
 }
 
 type WatchResults []WatchResult
 
-func (w *WatchResults) forID(ownerID int64) WatchResults {
+func (w *WatchResults) forID(ownerID int64) *WatchResults {
 	newResults := WatchResults{}
 	for _, r := range *w {
 		if r.OwnerID == ownerID {
 			newResults = append(newResults, r)
 		}
 	}
-
-	return newResults
+	sort.Slice(newResults, func(i, j int) bool {
+		return newResults[i].Name < newResults[j].Name
+	})
+	return &newResults
 }
 
 func (w WatchResults) GetLimits() *RateLimit {
@@ -146,28 +140,36 @@ func (w WatchResults) GetLimits() *RateLimit {
 	return rl
 }
 
-func (w *WatchResults) Update(ghToken string) error {
+func UpdateWatches(ghToken string) (*WatchResults, error) {
 	ctx := context.Background()
+	w := WatchResults{}
+
 	watches, err := app.queries.GetAllWatchItems(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, watch := range watches {
 		qd := GQLQuery{Query: fmt.Sprintf(graphQuery, watch.Repo, watch.Name)}
 		wr, err := getData(qd, ghToken)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		// TODO: cross ref the list of ignores and prune the wr accordingly
 		wr.OwnerID = watch.OwnerID
 		wr.Name = watch.Name
 		wr.Repo = watch.Repo
-		*w = append(*w, *wr)
+		sort.Slice(wr.Data.Search.Edges, func(i, j int) bool {
+			return wr.Data.Search.Edges[i].Node.CreatedAt.After(wr.Data.Search.Edges[j].Node.CreatedAt)
+		})
+		w = append(w, *wr)
 	}
 
-	return nil
+	sort.Slice(w, func(i, j int) bool {
+		return w[i].Name < w[j].Name
+	})
+
+	return &w, nil
 }
 
 type WatchResult struct {
