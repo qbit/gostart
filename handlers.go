@@ -4,19 +4,22 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/render"
-	"golang.org/x/image/font"
-	"golang.org/x/image/font/basicfont"
-	"golang.org/x/image/math/fixed"
+	"fmt"
 	"html/template"
 	"image"
 	"image/color"
 	"image/png"
 	"net/http"
 	"strconv"
-	"suah.dev/gostart/data"
+	"time"
 	"unicode"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/basicfont"
+	"golang.org/x/image/math/fixed"
+	"suah.dev/gostart/data"
 )
 
 // TODO: make this more generic.
@@ -337,6 +340,11 @@ var templateFuncs = template.FuncMap{
 			}
 		}
 		return true
+	},
+	"remaining": func(d time.Time) string {
+		ct := time.Now()
+		left := d.Sub(ct)
+		return fmt.Sprintf("%3.f", left.Minutes())
 	},
 }
 

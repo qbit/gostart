@@ -40,6 +40,7 @@ var app = &App{
 func main() {
 	name := flag.String("name", "startpage", "name of service")
 	key := flag.String("key", "", "path to file containing the api key")
+	watchInterval := flag.Int64("refresh", 5, "number of minutes between watch refresh")
 	dbFile := flag.String("db", ":memory:", "path to on-disk database file")
 	tokenFile := flag.String("auth", "", "path to file containing GH auth token")
 	flag.Parse()
@@ -143,7 +144,7 @@ func main() {
 			if err != nil {
 				log.Fatal("can't update watches: ", err)
 			}
-			time.Sleep(5 * time.Minute)
+			time.Sleep(time.Duration(*watchInterval) * time.Minute)
 		}
 
 	}()
