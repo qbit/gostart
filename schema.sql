@@ -31,7 +31,8 @@ create table links
     url        text                               not null unique,
     name       text                               not null,
     clicked    integer  default 0                 not null,
-    logo_url   text                               not null
+    logo_url   text                               not null,
+    shared     bool     default false             not null
 );
 create table pull_requests
 (

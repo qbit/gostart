@@ -29,15 +29,15 @@ where id = ?
 -- name: GetAllLinksForOwner :many
 select *
 from links
-where owner_id = ?;
+where owner_id = ? or shared = true;
 
 -- name: GetAllLinks :many
 select *
 from links;
 
 -- name: AddLink :one
-insert into links (owner_id, url, name, logo_url)
-values (?, ?, ?, ?) returning *;
+insert into links (owner_id, url, name, logo_url, shared)
+values (?, ?, ?, ?, ?) returning *;
 
 -- name: GetLinkByID :one
 select * from links where id = ?;

@@ -34,8 +34,8 @@ func (q *Queries) AddIcon(ctx context.Context, arg AddIconParams) error {
 }
 
 const addLink = `-- name: AddLink :one
-insert into links (owner_id, url, name, logo_url)
-values (?, ?, ?, ?) returning id, owner_id, created_at, url, name, clicked, logo_url
+insert into links (owner_id, url, name, logo_url, shared)
+values (?, ?, ?, ?, ?) returning id, owner_id, created_at, url, name, clicked, logo_url, shared
 `
 
 type AddLinkParams struct {
@@ -43,6 +43,7 @@ type AddLinkParams struct {
 	Url     string `json:"url"`
 	Name    string `json:"name"`
 	LogoUrl string `json:"logo_url"`
+	Shared  bool   `json:"shared"`
 }
 
 func (q *Queries) AddLink(ctx context.Context, arg AddLinkParams) (Link, error) {
@@ -51,6 +52,7 @@ func (q *Queries) AddLink(ctx context.Context, arg AddLinkParams) (Link, error) 
 		arg.Url,
 		arg.Name,
 		arg.LogoUrl,
+		arg.Shared,
 	)
 	var i Link
 	err := row.Scan(
@@ -61,6 +63,7 @@ func (q *Queries) AddLink(ctx context.Context, arg AddLinkParams) (Link, error) 
 		&i.Name,
 		&i.Clicked,
 		&i.LogoUrl,
+		&i.Shared,
 	)
 	return i, err
 }
@@ -257,7 +260,7 @@ func (q *Queries) GetAllIcons(ctx context.Context, ownerID int64) ([]Icon, error
 }
 
 const getAllLinks = `-- name: GetAllLinks :many
-select id, owner_id, created_at, url, name, clicked, logo_url
+select id, owner_id, created_at, url, name, clicked, logo_url, shared
 from links
 `
 
@@ -278,6 +281,7 @@ func (q *Queries) GetAllLinks(ctx context.Context) ([]Link, error) {
 			&i.Name,
 			&i.Clicked,
 			&i.LogoUrl,
+			&i.Shared,
 		); err != nil {
 			return nil, err
 		}
@@ -293,9 +297,9 @@ func (q *Queries) GetAllLinks(ctx context.Context) ([]Link, error) {
 }
 
 const getAllLinksForOwner = `-- name: GetAllLinksForOwner :many
-select id, owner_id, created_at, url, name, clicked, logo_url
+select id, owner_id, created_at, url, name, clicked, logo_url, shared
 from links
-where owner_id = ?
+where owner_id = ? or shared = true
 `
 
 func (q *Queries) GetAllLinksForOwner(ctx context.Context, ownerID int64) ([]Link, error) {
@@ -315,6 +319,7 @@ func (q *Queries) GetAllLinksForOwner(ctx context.Context, ownerID int64) ([]Lin
 			&i.Name,
 			&i.Clicked,
 			&i.LogoUrl,
+			&i.Shared,
 		); err != nil {
 			return nil, err
 		}
@@ -497,7 +502,7 @@ func (q *Queries) GetIconByLinkID(ctx context.Context, arg GetIconByLinkIDParams
 }
 
 const getLinkByID = `-- name: GetLinkByID :one
-select id, owner_id, created_at, url, name, clicked, logo_url from links where id = ?
+select id, owner_id, created_at, url, name, clicked, logo_url, shared from links where id = ?
 `
 
 func (q *Queries) GetLinkByID(ctx context.Context, id int64) (Link, error) {
@@ -511,6 +516,7 @@ func (q *Queries) GetLinkByID(ctx context.Context, id int64) (Link, error) {
 		&i.Name,
 		&i.Clicked,
 		&i.LogoUrl,
+		&i.Shared,
 	)
 	return i, err
 }

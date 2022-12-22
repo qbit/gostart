@@ -25,6 +25,7 @@ type Link struct {
 	Name      string    `json:"name"`
 	Clicked   int64     `json:"clicked"`
 	LogoUrl   string    `json:"logo_url"`
+	Shared    bool      `json:"shared"`
 }
 
 type Owner struct {
@@ -51,16 +52,6 @@ type PullRequestIgnore struct {
 	CreatedAt time.Time `json:"created_at"`
 	Number    int64     `json:"number"`
 	Repo      string    `json:"repo"`
-}
-
-type Todo struct {
-	OwnerID     int64        `json:"owner_id"`
-	LinkID      int64        `json:"link_id"`
-	CreatedAt   time.Time    `json:"created_at"`
-	CompletedAt sql.NullTime `json:"completed_at"`
-	Completed   bool         `json:"completed"`
-	Title       string       `json:"title"`
-	Body        string       `json:"body"`
 }
 
 type WatchItem struct {
