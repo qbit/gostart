@@ -59,8 +59,12 @@ func main() {
 		log.Fatal("can't get ts local client: ", err)
 	}
 
+	dbExists := false
 	if *dbFile == ":memory:" {
-		tmpDBPopulate(db)
+		err := tmpDBPopulate(db)
+		if err != nil {
+			log.Fatal(err)
+		}
 	} else {
 		if _, err := os.Stat(*dbFile); os.IsNotExist(err) {
 			log.Println("Creating database..")
@@ -69,6 +73,10 @@ func main() {
 			}
 		}
 	}
+	go func() {
+		time.Sleep(6 * time.Second)
+		dbExists = true
+	}()
 
 	if *key != "" {
 		keyData, err := os.ReadFile(*key)
@@ -139,57 +147,67 @@ func main() {
 
 	go func() {
 		for {
-			var err error
-			app.watches, err = UpdateWatches(ghToken)
-			if err != nil {
-				log.Fatal("can't update watches: ", err)
+			if dbExists {
+				var err error
+				app.watches, err = UpdateWatches(ghToken)
+				if err != nil {
+					log.Fatal("can't update watches: ", err)
+				}
+				time.Sleep(time.Duration(*watchInterval) * time.Minute)
+			} else {
+				time.Sleep(3 * time.Second)
 			}
-			time.Sleep(time.Duration(*watchInterval) * time.Minute)
 		}
 
 	}()
 
 	go func() {
-		links, err := app.queries.GetAllLinks(app.ctx)
-		if err != nil {
-			log.Fatal("can't get links: ", err)
+		if dbExists {
+			for {
+				links, err := app.queries.GetAllLinks(app.ctx)
+				if err != nil {
+					log.Fatal("can't get links: ", err)
+				}
+
+				for _, link := range links {
+					fmt.Println(link.LogoUrl)
+					if link.LogoUrl == "" {
+						continue
+					}
+					resp, err := http.Get(link.LogoUrl)
+					if err != nil {
+						log.Println(err)
+						continue
+					}
+
+					body, err := io.ReadAll(resp.Body)
+					if err != nil {
+						log.Println(err)
+						continue
+					}
+					err = resp.Body.Close()
+					if err != nil {
+						log.Println(err)
+						continue
+					}
+					contentType := resp.Header.Get("Content-Type")
+
+					err = app.queries.AddIcon(app.ctx, data.AddIconParams{
+						OwnerID:     link.OwnerID,
+						LinkID:      link.ID,
+						ContentType: contentType,
+						Data:        body,
+					})
+					if err != nil {
+						log.Fatal("can't add icon: ", err)
+
+					}
+				}
+				time.Sleep(24 * time.Hour)
+			}
+		} else {
+			time.Sleep(3 * time.Second)
 		}
-
-		for _, link := range links {
-			fmt.Println(link.LogoUrl)
-			if link.LogoUrl == "" {
-				continue
-			}
-			resp, err := http.Get(link.LogoUrl)
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-
-			body, err := io.ReadAll(resp.Body)
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-			err = resp.Body.Close()
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-			contentType := resp.Header.Get("Content-Type")
-
-			err = app.queries.AddIcon(app.ctx, data.AddIconParams{
-				OwnerID:     link.OwnerID,
-				LinkID:      link.ID,
-				ContentType: contentType,
-				Data:        body,
-			})
-			if err != nil {
-				log.Fatal("can't add icon: ", err)
-
-			}
-		}
-		time.Sleep(24 * time.Hour)
 	}()
 
 	hs := &http.Server{

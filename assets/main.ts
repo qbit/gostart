@@ -24,6 +24,7 @@ interface Link {
     Url: string
     Name: string
     Clicked: number|null
+    Shared: boolean
     Logo_Url: string
 }
 
@@ -67,10 +68,12 @@ async function sendLinkData() {
     const ln = document.getElementById("linkname") as HTMLInputElement;
     const lu = document.getElementById('linkurl') as HTMLInputElement;
     const ll = document.getElementById('logourl') as HTMLInputElement;
+    const ls = document.getElementById('linkshared') as HTMLInputElement;
     let data = {} as Link;
     data.Url = lu.value;
     data.Name = ln.value;
     data.Logo_Url = ll.value;
+    data.Shared = ls.checked;
     await postData('/links', data);
 }
 async function sendWatchData() {

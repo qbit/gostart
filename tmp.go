@@ -7,10 +7,10 @@ import (
 	"suah.dev/gostart/data"
 )
 
-func tmpDBPopulate(db *sql.DB) {
+func tmpDBPopulate(db *sql.DB) error {
 	log.Println("CREATING TEMP DATABASE!")
 	if _, err := db.ExecContext(app.ctx, schema); err != nil {
-		log.Fatal("can't create schema in temp db: ", err)
+		return err
 	}
 
 	ownerID := int64(57395170551826799)
@@ -20,15 +20,18 @@ func tmpDBPopulate(db *sql.DB) {
 		Name: "europa.humpback-trout.ts.net.",
 	})
 	if err != nil {
-		log.Fatal("can't add temp owner: ", err)
+		return err
 	}
-	b, err := app.queries.AddLink(app.ctx, data.AddLinkParams{
+	_, err = app.queries.AddLink(app.ctx, data.AddLinkParams{
 		OwnerID: ownerID,
 		Url:     "https://tapenet.org",
 		Name:    "Tape::Net",
+		Shared:  true,
 		LogoUrl: "https://git.tapenet.org/assets/img/logo.svg",
 	})
-	log.Println(b, err)
+	if err != nil {
+		return err
+	}
 
 	_, err = app.queries.AddPullRequest(app.ctx, data.AddPullRequestParams{
 		OwnerID: ownerID,
@@ -36,7 +39,7 @@ func tmpDBPopulate(db *sql.DB) {
 		Repo:    "NixOS/nixpkgs",
 	})
 	if err != nil {
-		log.Fatal("can't add temp PR: ", err)
+		return err
 	}
 	_, err = app.queries.AddWatchItem(app.ctx, data.AddWatchItemParams{
 		Name:    "tailscale",
@@ -44,6 +47,9 @@ func tmpDBPopulate(db *sql.DB) {
 		OwnerID: ownerID,
 	})
 	if err != nil {
-		log.Fatal("can't add temp watch item: ", err)
+		return err
 	}
+
+	log.Println("Done setting up tmp DB")
+	return nil
 }

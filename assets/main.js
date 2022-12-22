@@ -78,17 +78,19 @@ function deleteItem(path, id) {
 }
 function sendLinkData() {
     return __awaiter(this, void 0, void 0, function () {
-        var ln, lu, ll, data;
+        var ln, lu, ll, ls, data;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     ln = document.getElementById("linkname");
                     lu = document.getElementById('linkurl');
                     ll = document.getElementById('logourl');
+                    ls = document.getElementById('linkshared');
                     data = {};
                     data.Url = lu.value;
                     data.Name = ln.value;
                     data.Logo_Url = ll.value;
+                    data.Shared = ls.checked;
                     return [4 /*yield*/, postData('/links', data)];
                 case 1:
                     _a.sent();
