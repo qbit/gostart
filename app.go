@@ -28,11 +28,7 @@ func (a *App) getOwner(r *http.Request) (*tailcfg.Node, error) {
 	ownerID := int64(who.Node.ID)
 
 	ownerExists, err := a.queries.GetOwner(a.ctx, ownerID)
-	if err != nil {
-		log.Println("owner exists query failed: ", err)
-	}
-
-	if ownerExists.ID != ownerID {
+	if err != nil || ownerExists.ID != ownerID {
 		_, err = a.queries.AddOwner(a.ctx, data.AddOwnerParams{
 			ID:   int64(who.Node.ID),
 			Name: who.Node.ComputedName,
