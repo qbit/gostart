@@ -50,6 +50,7 @@ func main() {
 		log.Fatal("can't open database: ", err)
 	}
 
+	app.watches = &WatchResults{}
 	app.queries = data.New(db)
 	app.tsServer = &tsnet.Server{
 		Hostname: *name,
@@ -147,7 +148,7 @@ func main() {
 
 	go func() {
 		for {
-			if dbExists {
+			if dbExists && ghToken != "" {
 				var err error
 				app.watches, err = UpdateWatches(ghToken)
 				if err != nil {
