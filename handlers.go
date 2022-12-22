@@ -79,10 +79,10 @@ func iconGET(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		size := 24
 		img := image.NewRGBA(image.Rect(0, 0, size, size))
-		co := color.RGBA{0, 0, 0, 255}
+		co := color.RGBA{A: 255}
 		point := fixed.Point26_6{
-			fixed.I(size/2 - basicfont.Face7x13.Width),
-			fixed.I(size / 2),
+			X: fixed.I(size/2 - basicfont.Face7x13.Width),
+			Y: fixed.I(size / 2),
 		}
 		d := &font.Drawer{
 			Dst:  img,
