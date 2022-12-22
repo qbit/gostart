@@ -3,11 +3,11 @@ module suah.dev/gostart
 go 1.19
 
 require (
-	github.com/go-chi/chi/v5 v5.0.7
+	github.com/go-chi/chi/v5 v5.0.8
 	github.com/go-chi/render v1.0.2
-	golang.org/x/image v0.1.0
-	modernc.org/sqlite v1.19.5
-	tailscale.com v1.34.0
+	golang.org/x/image v0.2.0
+	modernc.org/sqlite v1.20.0
+	tailscale.com v1.34.1
 )
 
 require (
@@ -29,6 +29,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.11.1 // indirect
 	github.com/aws/smithy-go v1.9.0 // indirect
 	github.com/coreos/go-iptables v0.6.0 // indirect
+	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.4.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/godbus/dbus/v5 v5.0.6 // indirect
@@ -52,7 +53,7 @@ require (
 	github.com/mdlayher/socket v0.2.3 // indirect
 	github.com/mitchellh/go-ps v1.0.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
+	github.com/remyoudompheng/bigfft v0.0.0-20220927061507-ef77025ab5aa // indirect
 	github.com/tailscale/certstore v0.1.1-0.20220316223106-78d6e1c49d8d // indirect
 	github.com/tailscale/golang-x-crypto v0.0.0-20221102133106-bc99ab8c2d17 // indirect
 	github.com/tailscale/goupnp v1.0.1-0.20210804011211-c64d0f06ea05 // indirect
@@ -66,14 +67,14 @@ require (
 	go4.org/netipx v0.0.0-20220725152314-7e7bdc8411bf // indirect
 	golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f // indirect
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
-	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/net v0.1.0 // indirect
-	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
-	golang.org/x/sys v0.1.0 // indirect
-	golang.org/x/term v0.1.0 // indirect
-	golang.org/x/text v0.4.0 // indirect
+	golang.org/x/mod v0.7.0 // indirect
+	golang.org/x/net v0.3.0 // indirect
+	golang.org/x/sync v0.1.0 // indirect
+	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/term v0.3.0 // indirect
+	golang.org/x/text v0.5.0 // indirect
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11 // indirect
-	golang.org/x/tools v0.1.12 // indirect
+	golang.org/x/tools v0.4.0 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20211104114900-415007cec224 // indirect
 	golang.zx2c4.com/wireguard v0.0.0-20220920152132-bb719d3a6e2c // indirect
 	golang.zx2c4.com/wireguard/windows v0.5.3 // indirect
@@ -82,11 +83,11 @@ require (
 	lukechampine.com/uint128 v1.2.0 // indirect
 	modernc.org/cc/v3 v3.40.0 // indirect
 	modernc.org/ccgo/v3 v3.16.13 // indirect
-	modernc.org/libc v1.21.5 // indirect
+	modernc.org/libc v1.22.2 // indirect
 	modernc.org/mathutil v1.5.0 // indirect
-	modernc.org/memory v1.4.0 // indirect
+	modernc.org/memory v1.5.0 // indirect
 	modernc.org/opt v0.1.3 // indirect
 	modernc.org/strutil v1.1.3 // indirect
-	modernc.org/token v1.0.1 // indirect
+	modernc.org/token v1.1.0 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 )
