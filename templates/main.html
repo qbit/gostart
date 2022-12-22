@@ -55,6 +55,7 @@
 <body>
 <header>
     <h1>{{.Title}} for {{.Node.ComputedName}}</h1>
+    {{if .System.ShowShared}}Showing shared links.{{end}}
     <p>
         Remaining queries: <b>{{.CurrentLimits.Remaining}}</b><br />
         Limit resets in <b>{{remaining .CurrentLimits.ResetAt}}</b> minutes.

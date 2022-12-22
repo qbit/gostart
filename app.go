@@ -30,8 +30,9 @@ func (a *App) getOwner(r *http.Request) (*tailcfg.Node, error) {
 	ownerExists, err := a.queries.GetOwner(a.ctx, ownerID)
 	if err != nil || ownerExists.ID != ownerID {
 		_, err = a.queries.AddOwner(a.ctx, data.AddOwnerParams{
-			ID:   int64(who.Node.ID),
-			Name: who.Node.ComputedName,
+			ID:         int64(who.Node.ID),
+			Name:       who.Node.ComputedName,
+			ShowShared: false,
 		})
 		if err != nil {
 			log.Fatal("adding owner failed: ", err)

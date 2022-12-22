@@ -29,10 +29,11 @@ type Link struct {
 }
 
 type Owner struct {
-	ID        int64     `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	LastUsed  time.Time `json:"last_used"`
-	Name      string    `json:"name"`
+	ID         int64     `json:"id"`
+	CreatedAt  time.Time `json:"created_at"`
+	LastUsed   time.Time `json:"last_used"`
+	Name       string    `json:"name"`
+	ShowShared bool      `json:"show_shared"`
 }
 
 type PullRequest struct {

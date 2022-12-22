@@ -1,6 +1,6 @@
 -- name: AddOwner :one
-insert into owners (id, name)
-values (?, ?) returning *;
+insert into owners (id, name, show_shared)
+values (?, ?, ?) returning *;
 
 -- name: GetOwner :one
 select *
@@ -29,7 +29,8 @@ where id = ?
 -- name: GetAllLinksForOwner :many
 select *
 from links
-where owner_id = ? or shared = true;
+where owner_id = ?
+   or shared = true;
 
 -- name: GetAllLinks :many
 select *
@@ -40,7 +41,9 @@ insert into links (owner_id, url, name, logo_url, shared)
 values (?, ?, ?, ?, ?) returning *;
 
 -- name: GetLinkByID :one
-select * from links where id = ?;
+select *
+from links
+where id = ?;
 
 -- name: DeleteLink :exec
 delete

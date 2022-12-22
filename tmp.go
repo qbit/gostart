@@ -16,8 +16,9 @@ func tmpDBPopulate(db *sql.DB) error {
 	ownerID := int64(57395170551826799)
 
 	_, err := app.queries.AddOwner(app.ctx, data.AddOwnerParams{
-		ID:   57395170551826799,
-		Name: "europa.humpback-trout.ts.net.",
+		ID:         57395170551826799,
+		Name:       "europa.humpback-trout.ts.net.",
+		ShowShared: true,
 	})
 	if err != nil {
 		return err

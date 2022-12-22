@@ -1,9 +1,10 @@
 create table owners
 (
-    id         integer primary key                not null,
-    created_at datetime default current_timestamp not null,
-    last_used  datetime default current_timestamp not null,
-    name       text                               not null unique
+    id          integer primary key                not null,
+    created_at  datetime default current_timestamp not null,
+    last_used   datetime default current_timestamp not null,
+    name        text                               not null unique,
+    show_shared bool     default false             not null
 );
 create table watch_items
 (

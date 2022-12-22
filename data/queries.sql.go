@@ -69,23 +69,25 @@ func (q *Queries) AddLink(ctx context.Context, arg AddLinkParams) (Link, error) 
 }
 
 const addOwner = `-- name: AddOwner :one
-insert into owners (id, name)
-values (?, ?) returning id, created_at, last_used, name
+insert into owners (id, name, show_shared)
+values (?, ?, ?) returning id, created_at, last_used, name, show_shared
 `
 
 type AddOwnerParams struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
+	ID         int64  `json:"id"`
+	Name       string `json:"name"`
+	ShowShared bool   `json:"show_shared"`
 }
 
 func (q *Queries) AddOwner(ctx context.Context, arg AddOwnerParams) (Owner, error) {
-	row := q.db.QueryRowContext(ctx, addOwner, arg.ID, arg.Name)
+	row := q.db.QueryRowContext(ctx, addOwner, arg.ID, arg.Name, arg.ShowShared)
 	var i Owner
 	err := row.Scan(
 		&i.ID,
 		&i.CreatedAt,
 		&i.LastUsed,
 		&i.Name,
+		&i.ShowShared,
 	)
 	return i, err
 }
@@ -299,7 +301,8 @@ func (q *Queries) GetAllLinks(ctx context.Context) ([]Link, error) {
 const getAllLinksForOwner = `-- name: GetAllLinksForOwner :many
 select id, owner_id, created_at, url, name, clicked, logo_url, shared
 from links
-where owner_id = ? or shared = true
+where owner_id = ?
+   or shared = true
 `
 
 func (q *Queries) GetAllLinksForOwner(ctx context.Context, ownerID int64) ([]Link, error) {
@@ -502,7 +505,9 @@ func (q *Queries) GetIconByLinkID(ctx context.Context, arg GetIconByLinkIDParams
 }
 
 const getLinkByID = `-- name: GetLinkByID :one
-select id, owner_id, created_at, url, name, clicked, logo_url, shared from links where id = ?
+select id, owner_id, created_at, url, name, clicked, logo_url, shared
+from links
+where id = ?
 `
 
 func (q *Queries) GetLinkByID(ctx context.Context, id int64) (Link, error) {
@@ -522,7 +527,7 @@ func (q *Queries) GetLinkByID(ctx context.Context, id int64) (Link, error) {
 }
 
 const getOwner = `-- name: GetOwner :one
-select id, created_at, last_used, name
+select id, created_at, last_used, name, show_shared
 from owners
 where id = ?
 `
@@ -535,6 +540,7 @@ func (q *Queries) GetOwner(ctx context.Context, id int64) (Owner, error) {
 		&i.CreatedAt,
 		&i.LastUsed,
 		&i.Name,
+		&i.ShowShared,
 	)
 	return i, err
 }

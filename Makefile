@@ -13,5 +13,5 @@ sqlc: queries.sql schema.sql
 build:
 	go build
 
-run: build
-	./gostart -name startdev
+run: sqlc build
+	./gostart -name startdev -db ./test.db

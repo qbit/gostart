@@ -350,7 +350,7 @@ var templateFuncs = template.FuncMap{
 
 func index(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	owner, err := app.getOwner(r)
+	systemOwner, err := app.getOwner(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -367,6 +367,21 @@ func index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	owner, err := app.queries.GetOwner(ctx, ownerID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// TODO: maybe I can do this with an sql join...
+	filteredLinks := []data.Link{}
+	for _, l := range links {
+		if !owner.ShowShared && l.OwnerID != ownerID {
+			continue
+		}
+		filteredLinks = append(filteredLinks, l)
+	}
+
 	prs, err := app.queries.GetAllPullRequests(dbCtx, ownerID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -380,9 +395,10 @@ func index(w http.ResponseWriter, r *http.Request) {
 	}
 
 	stuff := &Page{
-		Node:          *owner,
+		Node:          *systemOwner,
+		System:        owner,
 		Title:         "StartPage",
-		Links:         links,
+		Links:         filteredLinks,
 		PullRequests:  prs,
 		Watches:       app.watches.forID(ownerID),
 		CurrentLimits: app.watches.GetLimits(),

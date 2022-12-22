@@ -97,6 +97,7 @@ func getData(q GQLQuery, token string) (*WatchResult, error) {
 
 type Page struct {
 	Title         string
+	System        data.Owner
 	PullRequests  []data.PullRequest
 	Links         []data.Link
 	Node          tailcfg.Node
