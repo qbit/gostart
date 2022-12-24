@@ -59,8 +59,7 @@ where owner_id = ?;
 -- name: GetIconByLinkID :one
 select *
 from icons
-where owner_id = ?
-  and link_id = ?;
+where link_id = ?;
 
 -- name: AddIcon :exec
 insert

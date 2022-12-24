@@ -54,11 +54,13 @@ func IconCacher(next http.Handler) http.Handler {
 
 func iconGET(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	ownerID, ok := ctx.Value(ownerKey).(int64)
-	if !ok {
-		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
-		return
-	}
+	/*
+		ownerID, ok := ctx.Value(ownerKey).(int64)
+		if !ok {
+			http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+			return
+		}
+	*/
 	linkID, err := strconv.Atoi(chi.URLParam(r, "linkID"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -71,10 +73,11 @@ func iconGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	icon, err := app.queries.GetIconByLinkID(ctx, data.GetIconByLinkIDParams{
-		LinkID:  int64(linkID),
-		OwnerID: ownerID,
-	})
+	icon, err := app.queries.GetIconByLinkID(ctx, int64(linkID))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	if err != nil {
 		size := 24

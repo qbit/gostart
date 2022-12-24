@@ -19,7 +19,7 @@
         in {
           gostart = pkgs.buildGoModule {
             pname = "gostart";
-            version = "v0.1.6";
+            version = "v0.1.7";
             src = ./.;
 
             vendorSha256 =

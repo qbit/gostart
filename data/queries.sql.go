@@ -482,17 +482,11 @@ func (q *Queries) GetAllWatchItemsByOwner(ctx context.Context, ownerID int64) ([
 const getIconByLinkID = `-- name: GetIconByLinkID :one
 select owner_id, link_id, created_at, content_type, data
 from icons
-where owner_id = ?
-  and link_id = ?
+where link_id = ?
 `
 
-type GetIconByLinkIDParams struct {
-	OwnerID int64 `json:"owner_id"`
-	LinkID  int64 `json:"link_id"`
-}
-
-func (q *Queries) GetIconByLinkID(ctx context.Context, arg GetIconByLinkIDParams) (Icon, error) {
-	row := q.db.QueryRowContext(ctx, getIconByLinkID, arg.OwnerID, arg.LinkID)
+func (q *Queries) GetIconByLinkID(ctx context.Context, linkID int64) (Icon, error) {
+	row := q.db.QueryRowContext(ctx, getIconByLinkID, linkID)
 	var i Icon
 	err := row.Scan(
 		&i.OwnerID,
