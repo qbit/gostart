@@ -75,11 +75,6 @@ func iconGET(w http.ResponseWriter, r *http.Request) {
 
 	icon, err := app.queries.GetIconByLinkID(ctx, int64(linkID))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if err != nil {
 		size := 24
 		img := image.NewRGBA(image.Rect(0, 0, size, size))
 		co := color.RGBA{A: 255}
