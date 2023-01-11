@@ -5,9 +5,9 @@ go 1.19
 require (
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/go-chi/render v1.0.2
-	golang.org/x/image v0.2.0
-	modernc.org/sqlite v1.20.0
-	tailscale.com v1.34.1
+	golang.org/x/image v0.3.0
+	modernc.org/sqlite v1.20.2
+	tailscale.com v1.34.2
 )
 
 require (
@@ -46,7 +46,7 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/klauspost/compress v1.15.4 // indirect
 	github.com/kortschak/wol v0.0.0-20200729010619-da482cc4850a // indirect
-	github.com/mattn/go-isatty v0.0.16 // indirect
+	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/mdlayher/genetlink v1.2.0 // indirect
 	github.com/mdlayher/netlink v1.6.0 // indirect
 	github.com/mdlayher/sdnotify v1.0.0 // indirect
@@ -68,13 +68,13 @@ require (
 	golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f // indirect
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
 	golang.org/x/mod v0.7.0 // indirect
-	golang.org/x/net v0.3.0 // indirect
+	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.3.0 // indirect
-	golang.org/x/term v0.3.0 // indirect
-	golang.org/x/text v0.5.0 // indirect
+	golang.org/x/sys v0.4.0 // indirect
+	golang.org/x/term v0.4.0 // indirect
+	golang.org/x/text v0.6.0 // indirect
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11 // indirect
-	golang.org/x/tools v0.4.0 // indirect
+	golang.org/x/tools v0.5.0 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20211104114900-415007cec224 // indirect
 	golang.zx2c4.com/wireguard v0.0.0-20220920152132-bb719d3a6e2c // indirect
 	golang.zx2c4.com/wireguard/windows v0.5.3 // indirect
