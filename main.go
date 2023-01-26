@@ -152,7 +152,7 @@ func main() {
 				var err error
 				app.watches, err = UpdateWatches(ghToken)
 				if err != nil {
-					log.Fatal("can't update watches: ", err)
+					log.Println("can't update watches: ", err)
 				}
 				time.Sleep(time.Duration(*watchInterval) * time.Minute)
 			} else {
@@ -167,7 +167,7 @@ func main() {
 			for {
 				links, err := app.queries.GetAllLinks(app.ctx)
 				if err != nil {
-					log.Fatal("can't get links: ", err)
+					log.Println("can't get links: ", err)
 				}
 
 				for _, link := range links {
@@ -200,7 +200,7 @@ func main() {
 						Data:        body,
 					})
 					if err != nil {
-						log.Fatal("can't add icon: ", err)
+						log.Println("can't add icon: ", err)
 
 					}
 				}
