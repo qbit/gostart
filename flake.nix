@@ -17,14 +17,13 @@
       packages = forAllSystems (system:
         let pkgs = nixpkgsFor.${system};
         in {
-          gostart = pkgs.buildGoModule {
+          gostart = pkgs.buildGo120Module {
             pname = "gostart";
-            version = "v0.1.11";
+            version = "v0.1.12";
             src = ./.;
 
             vendorSha256 =
-              "sha256-2QV9jPoq9qC7HiprE1c1Stwe6ctfQWy+YgGEaLlxOSk=";
-            proxyVendor = true;
+              "sha256-DvtZQK0bOXJfBYXnT8cRH6W2BOktJMsQCB8BQFw30T0=";
           };
         });
 
@@ -39,7 +38,7 @@
             '';
             nativeBuildInputs = with pkgs; [
               git
-              go
+              go_1_20
               gopls
               go-tools
               sqlc
