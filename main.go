@@ -50,6 +50,23 @@ func main() {
 		log.Fatal("can't open database: ", err)
 	}
 
+	dbExists := false
+	if *dbFile == ":memory:" {
+		err := tmpDBPopulate(db)
+		if err != nil {
+			log.Fatal(err)
+		}
+		dbExists = true
+	} else {
+		if _, err := os.Stat(*dbFile); os.IsNotExist(err) {
+			log.Println("Creating database..")
+			if _, err := db.ExecContext(app.ctx, schema); err != nil {
+				log.Fatal("can't create database schema: ", err)
+			}
+		}
+		dbExists = true
+	}
+
 	app.watches = &WatchResults{}
 	app.queries = data.New(db)
 	app.tsServer = &tsnet.Server{
@@ -60,24 +77,12 @@ func main() {
 		log.Fatal("can't get ts local client: ", err)
 	}
 
-	dbExists := false
-	if *dbFile == ":memory:" {
-		err := tmpDBPopulate(db)
-		if err != nil {
-			log.Fatal(err)
-		}
-	} else {
-		if _, err := os.Stat(*dbFile); os.IsNotExist(err) {
-			log.Println("Creating database..")
-			if _, err := db.ExecContext(app.ctx, schema); err != nil {
-				log.Fatal("can't create database schema: ", err)
-			}
-		}
-	}
-	go func() {
-		time.Sleep(6 * time.Second)
-		dbExists = true
-	}()
+	/*
+		go func() {
+			time.Sleep(6 * time.Second)
+			dbExists = true
+		}()
+	*/
 
 	if *key != "" {
 		keyData, err := os.ReadFile(*key)

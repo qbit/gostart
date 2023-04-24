@@ -117,11 +117,9 @@ func watchitemGET(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
 	}
-	watches, err := app.queries.GetAllWatchItemsByOwner(app.ctx, ownerID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+
+	watches := app.watches.forID(ownerID)
+
 	wJson, err := json.Marshal(watches)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

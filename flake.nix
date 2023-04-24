@@ -44,7 +44,8 @@
               sqlc
               sqlite
               rlwrap
-              nodePackages.typescript
+              elmPackages.elm
+              elmPackages.elm-live
             ];
           };
         });
