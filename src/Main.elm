@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import Browser
+import Data
 import Html exposing (..)
 import Html.Attributes exposing (style)
 import Html.Events exposing (..)
@@ -20,40 +21,7 @@ main =
 type Model
     = Failure
     | Loading
-    | Success (List Watch)
-
-
-type alias Watch =
-    { owner_id : Int
-    , name : String
-    , repo : String
-    , result_count : Int
-    }
-
-
-type alias Node =
-    { number : Int
-    }
-
-
-type alias Edge =
-    { node : Node
-    }
-
-
-type alias WatchData =
-    { search : List Edge
-    }
-
-
-type alias Link =
-    { id : Int
-    , owner_id : Int
-    , created_at : String
-    , name : String
-    , url : String
-    , logo_url : String
-    }
+    | Success (List Data.Watch)
 
 
 init : () -> ( Model, Cmd Msg )
@@ -67,7 +35,7 @@ init _ =
 
 type Msg
     = MorePlease
-    | GetWatches (Result Http.Error (List Watch))
+    | GetWatches (Result Http.Error (List Data.Watch))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -139,21 +107,21 @@ getWatches =
         }
 
 
-watchListDecoder : Decoder (List Watch)
+watchListDecoder : Decoder (List Data.Watch)
 watchListDecoder =
     list watchDecoder
 
 
-watchDecoder : Decoder Watch
+watchDecoder : Decoder Data.Watch
 watchDecoder =
-    map4 Watch
+    map4 Data.Watch
         (field "owner_id" int)
         (field "name" string)
         (field "repo" string)
         (field "result_count" int)
 
 
-viewWatch : Watch -> Html Msg
+viewWatch : Data.Watch -> Html Msg
 viewWatch watch =
     li []
         [ text (String.fromInt watch.result_count ++ " " ++ watch.name)
