@@ -79,23 +79,6 @@ view model =
         ]
 
 
-viewWatches : Model -> Html Msg
-viewWatches model =
-    case model of
-        Failure ->
-            div []
-                [ text "I can't load the watches"
-                , button [ onClick MorePlease ] [ text "Try agan!" ]
-                ]
-
-        Loading ->
-            text "Loading..."
-
-        Success watches ->
-            div []
-                (List.map viewWatch watches)
-
-
 getWatches : Cmd Msg
 getWatches =
     Http.get
@@ -135,9 +118,38 @@ repoInfoDecoder =
         (field "nameWithOwner" string)
 
 
+viewWatches : Model -> Html Msg
+viewWatches model =
+    case model of
+        Failure ->
+            div []
+                [ text "I can't load the watches"
+                , button [ onClick MorePlease ] [ text "Try agan!" ]
+                ]
+
+        Loading ->
+            text "Loading..."
+
+        Success watches ->
+            div []
+                (List.map viewWatch watches)
+
+
 viewWatch : Data.Watch -> Html Msg
 viewWatch watch =
-    li []
-        [ text (String.fromInt watch.resultCount ++ " " ++ watch.name)
-        , li [] [ text "butter" ]
+    ul []
+        [ li
+            []
+            [ text (String.fromInt watch.resultCount ++ " " ++ watch.name)
+
+            -- I'd like to iterate over watch.results and create an <li> for each
+            -- entry that might exist. If watch.results is empty, i'd like to just
+            -- have an empty ul.
+            , ul [] [ text (Debug.toString watch.results) ]
+            ]
         ]
+
+
+displayResult : Data.Node -> Html Msg
+displayResult node =
+    li [] [ text (String.fromInt node.number) ]
