@@ -6,7 +6,20 @@ import Html exposing (..)
 import Html.Attributes exposing (style)
 import Html.Events exposing (..)
 import Http
-import Json.Decode exposing (Decoder, field, int, list, map3, map4, map5, maybe, string)
+import Json.Decode as Decode
+    exposing
+        ( Decoder
+        , decodeString
+        , field
+        , float
+        , int
+        , list
+        , map
+        , map4
+        , map5
+        , maybe
+        , string
+        )
 
 
 main =
@@ -83,22 +96,6 @@ viewWatches model =
                 (List.map viewWatch watches)
 
 
-viewLinks : Model -> Html Msg
-viewLinks model =
-    case model of
-        Failure ->
-            div []
-                [ text "I can't load the links"
-                , button [ onClick MorePlease ] [ text "Try agan!" ]
-                ]
-
-        Loading ->
-            text "Loading..."
-
-        Success links ->
-            text "success links..."
-
-
 getWatches : Cmd Msg
 getWatches =
     Http.get
@@ -114,16 +111,33 @@ watchListDecoder =
 
 watchDecoder : Decoder Data.Watch
 watchDecoder =
-    map4 Data.Watch
+    map5 Data.Watch
         (field "owner_id" int)
         (field "name" string)
         (field "repo" string)
         (field "result_count" int)
+        (field "results" <| maybe (list resultsDecoder))
+
+
+resultsDecoder : Decoder Data.Node
+resultsDecoder =
+    map5 Data.Node
+        (field "number" int)
+        (field "createdAt" string)
+        (field "repository" repoInfoDecoder)
+        (field "title" string)
+        (field "url" string)
+
+
+repoInfoDecoder : Decoder Data.RepoInfo
+repoInfoDecoder =
+    Decode.map Data.RepoInfo
+        (field "nameWithOwner" string)
 
 
 viewWatch : Data.Watch -> Html Msg
 viewWatch watch =
     li []
-        [ text (String.fromInt watch.result_count ++ " " ++ watch.name)
+        [ text (String.fromInt watch.resultCount ++ " " ++ watch.name)
         , li [] [ text "butter" ]
         ]
