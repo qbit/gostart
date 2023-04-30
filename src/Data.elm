@@ -1,4 +1,22 @@
-module Data exposing (Node, RepoInfo, Watch)
+module Data exposing (Link, Links, Node, RepoInfo, Watch, Watches)
+
+
+type alias Watches =
+    List Watch
+
+
+type alias Links =
+    List Link
+
+
+type alias Link =
+    { id : Int
+    , createdAt : String
+    , url : String
+    , name : String
+    , logoURL : String
+    , shared : Bool
+    }
 
 
 type alias Watch =
@@ -6,7 +24,7 @@ type alias Watch =
     , name : String
     , repo : String
     , resultCount : Int
-    , results : Maybe (List Node)
+    , results : List Node
     }
 
 

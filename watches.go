@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"sort"
 	"time"
+
+	"suah.dev/gostart/data"
 )
 
 const gqEndPoint = "https://api.github.com/graphql"
@@ -57,16 +59,47 @@ type GQLQuery struct {
 
 type WatchResults []WatchResult
 
+func includeWatch(repo string, number int, ignoreList []data.PullRequestIgnore) bool {
+	for _, pri := range ignoreList {
+		if pri.Repo == repo && pri.Number == int64(number) {
+			return false
+		}
+	}
+	return true
+}
+
 func (w *WatchResults) forID(ownerID int64) *WatchResults {
 	newResults := WatchResults{}
+	tmpResults := WatchResults{}
+	ctx := context.Background()
+	ignores, _ := app.queries.GetAllPullRequestIgnores(ctx, ownerID)
+
 	for _, r := range *w {
 		if r.OwnerID == ownerID {
-			newResults = append(newResults, r)
+			if r.Results == nil {
+				r.Results = make([]Node, 0)
+			}
+
+			tmpResults = append(tmpResults, r)
 		}
 	}
 	sort.Slice(newResults, func(i, j int) bool {
 		return newResults[i].Name < newResults[j].Name
 	})
+
+	for _, r := range tmpResults {
+		tmpResultList := []Node{}
+		for _, entry := range r.Results {
+			if includeWatch(entry.Repository.NameWithOwner, entry.Number, ignores) {
+				tmpResultList = append(tmpResultList, entry)
+			}
+		}
+		r.Results = tmpResultList
+		r.ResultCount = len(tmpResultList)
+		newResults = append(newResults, r)
+
+	}
+
 	return &newResults
 }
 
@@ -100,7 +133,6 @@ func UpdateWatches(ghToken string) (*WatchResults, error) {
 		wr.OwnerID = watch.OwnerID
 		wr.Name = watch.Name
 		wr.Repo = watch.Repo
-		wr.ResultCount = wr.Data.Search.IssueCount
 		for _, dr := range wr.Data.Search.Edges {
 			wr.Results = append(wr.Results, dr.Node)
 		}

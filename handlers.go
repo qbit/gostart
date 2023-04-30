@@ -329,14 +329,7 @@ func linkDELETE(w http.ResponseWriter, r *http.Request) {
 }
 
 var templateFuncs = template.FuncMap{
-	"includeWatch": func(repo string, number int, ignoreList []data.PullRequestIgnore) bool {
-		for _, pri := range ignoreList {
-			if pri.Repo == repo && pri.Number == int64(number) {
-				return false
-			}
-		}
-		return true
-	},
+	"includeWatch": includeWatch,
 	"remaining": func(d time.Time) string {
 		ct := time.Now()
 		left := d.Sub(ct)

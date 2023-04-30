@@ -104,16 +104,13 @@ func main() {
 		}
 	}()
 
-	fileServer := http.FileServer(http.FS(assets))
+	liveServer := http.FileServer(http.Dir("./assets"))
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
 	r.Use(OwnerCtx)
 
-	r.Mount("/assets", fileServer)
-	r.Route("/", func(r chi.Router) {
-		r.Get("/", index)
-	})
+	r.Mount("/", liveServer)
 	r.Route("/pullrequests", func(r chi.Router) {
 		r.Use(render.SetContentType(render.ContentTypeJSON))
 		r.Get("/", pullrequestsGET)
