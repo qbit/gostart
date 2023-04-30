@@ -3,21 +3,20 @@ module Main exposing (..)
 import Browser
 import Data
 import Html exposing (..)
-import Html.Attributes exposing (style)
+import Html.Attributes exposing (href, style)
 import Html.Events exposing (..)
 import Http
 import Json.Decode as Decode
     exposing
         ( Decoder
+        , bool
         , decodeString
         , field
-        , float
         , int
         , list
         , map
-        , map4
         , map5
-        , maybe
+        , map6
         , string
         )
 
@@ -35,6 +34,13 @@ type Model
     = Failure
     | Loading
     | Success (List Data.Watch)
+
+
+initialModel : { watches : List Data.Watch, links : List Data.Link }
+initialModel =
+    { watches = []
+    , links = []
+    }
 
 
 init : () -> ( Model, Cmd Msg )
@@ -87,6 +93,22 @@ getWatches =
         }
 
 
+linkListDecoder : Decoder (List Data.Link)
+linkListDecoder =
+    list linkDecoder
+
+
+linkDecoder : Decoder Data.Link
+linkDecoder =
+    map6 Data.Link
+        (field "id" int)
+        (field "created_at" string)
+        (field "url" string)
+        (field "name" string)
+        (field "logo_url" string)
+        (field "shared" bool)
+
+
 watchListDecoder : Decoder (List Data.Watch)
 watchListDecoder =
     list watchDecoder
@@ -99,7 +121,7 @@ watchDecoder =
         (field "name" string)
         (field "repo" string)
         (field "result_count" int)
-        (field "results" <| maybe (list resultsDecoder))
+        (field "results" <| list resultsDecoder)
 
 
 resultsDecoder : Decoder Data.Node
@@ -137,19 +159,24 @@ viewWatches model =
 
 viewWatch : Data.Watch -> Html Msg
 viewWatch watch =
-    ul []
-        [ li
-            []
-            [ text (String.fromInt watch.resultCount ++ " " ++ watch.name)
+    case watch.results of
+        [] ->
+            text ""
 
-            -- I'd like to iterate over watch.results and create an <li> for each
-            -- entry that might exist. If watch.results is empty, i'd like to just
-            -- have an empty ul.
-            , ul [] [ text (Debug.toString watch.results) ]
-            ]
-        ]
+        _ ->
+            ul []
+                [ li
+                    []
+                    [ text (watch.repo ++ " :: ")
+                    , text watch.name
+                    , ul [] (List.map displayResult watch.results)
+                    ]
+                ]
 
 
 displayResult : Data.Node -> Html Msg
 displayResult node =
-    li [] [ text (String.fromInt node.number) ]
+    li []
+        [ a [ href node.url ] [ text (String.fromInt node.number) ]
+        , text (" :: " ++ node.title)
+        ]
