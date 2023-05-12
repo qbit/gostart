@@ -6391,16 +6391,16 @@ var $author$project$Main$viewLink = function (link) {
 		_List_fromArray(
 			[
 				A2(
-				$elm$html$Html$a,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$href(link.url)
-					]),
+				$elm$html$Html$div,
+				_List_Nil,
 				_List_fromArray(
 					[
 						A2(
-						$elm$html$Html$div,
-						_List_Nil,
+						$elm$html$Html$a,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$href(link.url)
+							]),
 						_List_fromArray(
 							[
 								A2(
@@ -6506,7 +6506,7 @@ var $author$project$Main$displayResult = function (node) {
 var $author$project$Main$viewWatch = function (watch) {
 	var _v0 = watch.results;
 	if (!_v0.b) {
-		return $elm$html$Html$text('No watch items!');
+		return $elm$html$Html$text('');
 	} else {
 		return A2(
 			$elm$html$Html$div,

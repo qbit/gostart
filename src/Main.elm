@@ -29,14 +29,6 @@ main =
         }
 
 
-
---type Model
---    = Failure
---    | Loading
---    | WatchSuccess (List Data.Watch)
---    | LinkSuccess (List Data.Link)
-
-
 type Status
     = Loading
     | LoadedWatches (List Data.Watch)
@@ -270,8 +262,8 @@ viewWatches model =
 viewLink : Data.Link -> Html Msg
 viewLink link =
     div []
-        [ a [ href link.url ]
-            [ div []
+        [ div []
+            [ a [ href link.url ]
                 [ div
                     [ class "icon" ]
                     [ header []
@@ -288,7 +280,7 @@ viewWatch : Data.Watch -> Html Msg
 viewWatch watch =
     case watch.results of
         [] ->
-            text "No watch items!"
+            text ""
 
         _ ->
             div []
