@@ -3,7 +3,7 @@ module Main exposing (..)
 import Browser
 import Data
 import Html exposing (..)
-import Html.Attributes exposing (href)
+import Html.Attributes exposing (class, href, src)
 import Html.Events exposing (..)
 import Http
 import Json.Decode as Decode
@@ -29,57 +29,114 @@ main =
         }
 
 
-type Model
-    = Failure
-    | Loading
-    | WatchSuccess (List Data.Watch)
-    | LinkSuccess (List Data.Link)
+
+--type Model
+--    = Failure
+--    | Loading
+--    | WatchSuccess (List Data.Watch)
+--    | LinkSuccess (List Data.Link)
 
 
-initialModel : { watches : List Data.Watch, links : List Data.Link }
+type Status
+    = Loading
+    | LoadedWatches (List Data.Watch)
+    | LoadedLinks (List Data.Link)
+    | Errored String
+
+
+type alias Model =
+    { watches : List Data.Watch
+    , links : List Data.Link
+    , errors : List String
+    , status : Status
+    }
+
+
+initialModel : Model
 initialModel =
     { watches = []
     , links = []
+    , errors = []
+    , status = Loading
     }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Loading
-    , Cmd.batch
-        [ getLinks
-        , getWatches
-        ]
-    )
+    ( initialModel, Cmd.batch [ getLinks, getWatches ] )
 
 
 type Msg
-    = MorePlease
-    | GetWatches (Result Http.Error (List Data.Watch))
-    | GetLinks (Result Http.Error (List Data.Link))
+    = Reload
+    | ReloadLinks
+    | ReloadWatches
+    | AddLink
+    | AddWatch
+    | GotWatches (Result Http.Error (List Data.Watch))
+    | GotLinks (Result Http.Error (List Data.Link))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg _ =
+update msg model =
     case msg of
-        MorePlease ->
-            ( Loading, Cmd.batch [ getLinks, getWatches ] )
+        AddLink ->
+            ( model, Cmd.none )
 
-        GetWatches result ->
-            case result of
-                Ok watches ->
-                    ( WatchSuccess watches, Cmd.none )
+        AddWatch ->
+            ( model, Cmd.none )
 
-                Err _ ->
-                    ( Failure, Cmd.none )
+        Reload ->
+            ( model, Cmd.batch [ getWatches, getLinks ] )
 
-        GetLinks result ->
-            case result of
-                Ok links ->
-                    ( LinkSuccess links, Cmd.none )
+        ReloadWatches ->
+            ( model, Cmd.batch [ getWatches ] )
 
-                Err _ ->
-                    ( Failure, Cmd.none )
+        ReloadLinks ->
+            ( model, Cmd.batch [ getLinks ] )
+
+        GotWatches (Err _) ->
+            ( { model | status = Errored "Server error when fetching watches!" }, Cmd.none )
+
+        GotLinks (Err _) ->
+            ( { model | status = Errored "Server error when fetching links!" }, Cmd.none )
+
+        GotWatches (Ok watches) ->
+            case watches of
+                _ :: _ ->
+                    ( { model
+                        | watches = watches
+                        , status =
+                            case List.head watches of
+                                Just _ ->
+                                    LoadedWatches watches
+
+                                Nothing ->
+                                    LoadedWatches []
+                      }
+                    , Cmd.none
+                    )
+
+                [] ->
+                    ( { model | status = Errored "No Watches found" }, Cmd.none )
+
+        GotLinks (Ok links) ->
+            case links of
+                _ :: _ ->
+                    ( { model
+                        | links = links
+                        , status =
+                            case List.head links of
+                                Just _ ->
+                                    LoadedLinks links
+
+                                Nothing ->
+                                    LoadedLinks []
+                      }
+                    , Cmd.none
+                    )
+
+                [] ->
+                    ( { model | status = Errored "No Watches found" }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -87,10 +144,27 @@ subscriptions _ =
     Sub.none
 
 
+mainEle : List (Attribute msg) -> List (Html msg) -> Html msg
+mainEle attributes children =
+    node "main" attributes children
+
+
 view : Model -> Html Msg
 view model =
     div []
-        [ viewData model
+        [ mainEle
+            []
+            [ div [ class "grid" ]
+                [ div [ class "col" ]
+                    [ viewWatches model
+                    ]
+                , div [ class "col" ]
+                    [ viewLinks model
+                    ]
+                ]
+            , footer []
+                [ text "the foot" ]
+            ]
         ]
 
 
@@ -98,7 +172,7 @@ getLinks : Cmd Msg
 getLinks =
     Http.get
         { url = "/links"
-        , expect = Http.expectJson GetLinks linkListDecoder
+        , expect = Http.expectJson GotLinks linkListDecoder
         }
 
 
@@ -106,7 +180,7 @@ getWatches : Cmd Msg
 getWatches =
     Http.get
         { url = "/watches"
-        , expect = Http.expectJson GetWatches watchListDecoder
+        , expect = Http.expectJson GotWatches watchListDecoder
         }
 
 
@@ -157,31 +231,56 @@ repoInfoDecoder =
         (field "nameWithOwner" string)
 
 
-viewData : Model -> Html Msg
-viewData model =
-    case model of
-        Failure ->
+viewLinks : Model -> Html Msg
+viewLinks model =
+    case model.links of
+        _ :: _ ->
             div []
-                [ text "I can't load the watches"
-                , button [ onClick MorePlease ] [ text "Try agan!" ]
+                [ header [ class "bar" ]
+                    [ a [ onClick ReloadLinks ] [ text " ⟳" ]
+                    , a [ onClick AddLink ] [ text " + " ]
+                    ]
+                , div
+                    [ class "icon-grid" ]
+                    (List.map viewLink model.links)
                 ]
 
-        Loading ->
-            text "Loading..."
+        [] ->
+            text "No Links!"
 
-        WatchSuccess watches ->
-            div []
-                (List.map viewWatch watches)
 
-        LinkSuccess links ->
+viewWatches : Model -> Html Msg
+viewWatches model =
+    case model.watches of
+        _ :: _ ->
             div []
-                (List.map viewLink links)
+                [ header [ class "bar" ]
+                    [ a [ onClick ReloadWatches ] [ text " ⟳" ]
+                    , a [ onClick AddWatch ] [ text " + " ]
+                    ]
+                , ul
+                    []
+                    (List.map viewWatch model.watches)
+                ]
+
+        [] ->
+            text "No Watches!"
 
 
 viewLink : Data.Link -> Html Msg
 viewLink link =
     div []
-        [ h2 [] [ text link.name ]
+        [ a [ href link.url ]
+            [ div []
+                [ div
+                    [ class "icon" ]
+                    [ header []
+                        [ img [ src link.logoURL ] []
+                        ]
+                    , text link.name
+                    ]
+                ]
+            ]
         ]
 
 
@@ -189,15 +288,15 @@ viewWatch : Data.Watch -> Html Msg
 viewWatch watch =
     case watch.results of
         [] ->
-            text ""
+            text "No watch items!"
 
         _ ->
             div []
-                [ h2 [] [ text "The Watches" ]
-                , ul []
+                [ ul []
                     [ li
                         []
-                        [ text (watch.repo ++ " :: ")
+                        [ text watch.repo
+                        , text " :: "
                         , text watch.name
                         , ul [] (List.map displayResult watch.results)
                         ]

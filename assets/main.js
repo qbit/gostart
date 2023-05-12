@@ -5334,10 +5334,9 @@ var $elm$core$Task$perform = F2(
 				A2($elm$core$Task$map, toMessage, task)));
 	});
 var $elm$browser$Browser$element = _Browser_element;
-var $author$project$Main$Loading = {$: 'Loading'};
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
-var $author$project$Main$GetLinks = function (a) {
-	return {$: 'GetLinks', a: a};
+var $author$project$Main$GotLinks = function (a) {
+	return {$: 'GotLinks', a: a};
 };
 var $elm$json$Json$Decode$decodeString = _Json_runOnString;
 var $elm$http$Http$BadStatus_ = F2(
@@ -6148,11 +6147,11 @@ var $elm$json$Json$Decode$list = _Json_decodeList;
 var $author$project$Main$linkListDecoder = $elm$json$Json$Decode$list($author$project$Main$linkDecoder);
 var $author$project$Main$getLinks = $elm$http$Http$get(
 	{
-		expect: A2($elm$http$Http$expectJson, $author$project$Main$GetLinks, $author$project$Main$linkListDecoder),
+		expect: A2($elm$http$Http$expectJson, $author$project$Main$GotLinks, $author$project$Main$linkListDecoder),
 		url: '/links'
 	});
-var $author$project$Main$GetWatches = function (a) {
-	return {$: 'GetWatches', a: a};
+var $author$project$Main$GotWatches = function (a) {
+	return {$: 'GotWatches', a: a};
 };
 var $author$project$Data$Watch = F5(
 	function (ownerId, name, repo, resultCount, results) {
@@ -6192,12 +6191,14 @@ var $author$project$Main$watchDecoder = A6(
 var $author$project$Main$watchListDecoder = $elm$json$Json$Decode$list($author$project$Main$watchDecoder);
 var $author$project$Main$getWatches = $elm$http$Http$get(
 	{
-		expect: A2($elm$http$Http$expectJson, $author$project$Main$GetWatches, $author$project$Main$watchListDecoder),
+		expect: A2($elm$http$Http$expectJson, $author$project$Main$GotWatches, $author$project$Main$watchListDecoder),
 		url: '/watches'
 	});
+var $author$project$Main$Loading = {$: 'Loading'};
+var $author$project$Main$initialModel = {errors: _List_Nil, links: _List_Nil, status: $author$project$Main$Loading, watches: _List_Nil};
 var $author$project$Main$init = function (_v0) {
 	return _Utils_Tuple2(
-		$author$project$Main$Loading,
+		$author$project$Main$initialModel,
 		$elm$core$Platform$Cmd$batch(
 			_List_fromArray(
 				[$author$project$Main$getLinks, $author$project$Main$getWatches])));
@@ -6207,48 +6208,152 @@ var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
 var $author$project$Main$subscriptions = function (_v0) {
 	return $elm$core$Platform$Sub$none;
 };
-var $author$project$Main$Failure = {$: 'Failure'};
-var $author$project$Main$LinkSuccess = function (a) {
-	return {$: 'LinkSuccess', a: a};
+var $author$project$Main$Errored = function (a) {
+	return {$: 'Errored', a: a};
 };
-var $author$project$Main$WatchSuccess = function (a) {
-	return {$: 'WatchSuccess', a: a};
+var $author$project$Main$LoadedLinks = function (a) {
+	return {$: 'LoadedLinks', a: a};
+};
+var $author$project$Main$LoadedWatches = function (a) {
+	return {$: 'LoadedWatches', a: a};
+};
+var $elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(x);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
 };
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Main$update = F2(
-	function (msg, _v0) {
+	function (msg, model) {
 		switch (msg.$) {
-			case 'MorePlease':
+			case 'AddLink':
+				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+			case 'AddWatch':
+				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+			case 'Reload':
 				return _Utils_Tuple2(
-					$author$project$Main$Loading,
+					model,
 					$elm$core$Platform$Cmd$batch(
 						_List_fromArray(
-							[$author$project$Main$getLinks, $author$project$Main$getWatches])));
-			case 'GetWatches':
-				var result = msg.a;
-				if (result.$ === 'Ok') {
-					var watches = result.a;
+							[$author$project$Main$getWatches, $author$project$Main$getLinks])));
+			case 'ReloadWatches':
+				return _Utils_Tuple2(
+					model,
+					$elm$core$Platform$Cmd$batch(
+						_List_fromArray(
+							[$author$project$Main$getWatches])));
+			case 'ReloadLinks':
+				return _Utils_Tuple2(
+					model,
+					$elm$core$Platform$Cmd$batch(
+						_List_fromArray(
+							[$author$project$Main$getLinks])));
+			case 'GotWatches':
+				if (msg.a.$ === 'Err') {
 					return _Utils_Tuple2(
-						$author$project$Main$WatchSuccess(watches),
+						_Utils_update(
+							model,
+							{
+								status: $author$project$Main$Errored('Server error when fetching watches!')
+							}),
 						$elm$core$Platform$Cmd$none);
 				} else {
-					return _Utils_Tuple2($author$project$Main$Failure, $elm$core$Platform$Cmd$none);
+					var watches = msg.a.a;
+					if (watches.b) {
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{
+									status: function () {
+										var _v2 = $elm$core$List$head(watches);
+										if (_v2.$ === 'Just') {
+											return $author$project$Main$LoadedWatches(watches);
+										} else {
+											return $author$project$Main$LoadedWatches(_List_Nil);
+										}
+									}(),
+									watches: watches
+								}),
+							$elm$core$Platform$Cmd$none);
+					} else {
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{
+									status: $author$project$Main$Errored('No Watches found')
+								}),
+							$elm$core$Platform$Cmd$none);
+					}
 				}
 			default:
-				var result = msg.a;
-				if (result.$ === 'Ok') {
-					var links = result.a;
+				if (msg.a.$ === 'Err') {
 					return _Utils_Tuple2(
-						$author$project$Main$LinkSuccess(links),
+						_Utils_update(
+							model,
+							{
+								status: $author$project$Main$Errored('Server error when fetching links!')
+							}),
 						$elm$core$Platform$Cmd$none);
 				} else {
-					return _Utils_Tuple2($author$project$Main$Failure, $elm$core$Platform$Cmd$none);
+					var links = msg.a.a;
+					if (links.b) {
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{
+									links: links,
+									status: function () {
+										var _v4 = $elm$core$List$head(links);
+										if (_v4.$ === 'Just') {
+											return $author$project$Main$LoadedLinks(links);
+										} else {
+											return $author$project$Main$LoadedLinks(_List_Nil);
+										}
+									}()
+								}),
+							$elm$core$Platform$Cmd$none);
+					} else {
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{
+									status: $author$project$Main$Errored('No Watches found')
+								}),
+							$elm$core$Platform$Cmd$none);
+					}
 				}
 		}
 	});
+var $elm$json$Json$Encode$string = _Json_wrap;
+var $elm$html$Html$Attributes$stringProperty = F2(
+	function (key, string) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$string(string));
+	});
+var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
 var $elm$html$Html$div = _VirtualDom_node('div');
-var $author$project$Main$MorePlease = {$: 'MorePlease'};
-var $elm$html$Html$button = _VirtualDom_node('button');
+var $elm$html$Html$footer = _VirtualDom_node('footer');
+var $elm$virtual_dom$VirtualDom$node = function (tag) {
+	return _VirtualDom_node(
+		_VirtualDom_noScript(tag));
+};
+var $elm$html$Html$node = $elm$virtual_dom$VirtualDom$node;
+var $author$project$Main$mainEle = F2(
+	function (attributes, children) {
+		return A3($elm$html$Html$node, 'main', attributes, children);
+	});
+var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $author$project$Main$AddLink = {$: 'AddLink'};
+var $author$project$Main$ReloadLinks = {$: 'ReloadLinks'};
+var $elm$html$Html$a = _VirtualDom_node('a');
+var $elm$html$Html$header = _VirtualDom_node('header');
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
 };
@@ -6266,9 +6371,19 @@ var $elm$html$Html$Events$onClick = function (msg) {
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
 };
-var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
-var $elm$html$Html$h2 = _VirtualDom_node('h2');
+var $elm$html$Html$Attributes$href = function (url) {
+	return A2(
+		$elm$html$Html$Attributes$stringProperty,
+		'href',
+		_VirtualDom_noJavaScriptUri(url));
+};
+var $elm$html$Html$img = _VirtualDom_node('img');
+var $elm$html$Html$Attributes$src = function (url) {
+	return A2(
+		$elm$html$Html$Attributes$stringProperty,
+		'src',
+		_VirtualDom_noJavaScriptOrHtmlUri(url));
+};
 var $author$project$Main$viewLink = function (link) {
 	return A2(
 		$elm$html$Html$div,
@@ -6276,29 +6391,97 @@ var $author$project$Main$viewLink = function (link) {
 		_List_fromArray(
 			[
 				A2(
-				$elm$html$Html$h2,
-				_List_Nil,
+				$elm$html$Html$a,
 				_List_fromArray(
 					[
-						$elm$html$Html$text(link.name)
+						$elm$html$Html$Attributes$href(link.url)
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('icon')
+									]),
+								_List_fromArray(
+									[
+										A2(
+										$elm$html$Html$header,
+										_List_Nil,
+										_List_fromArray(
+											[
+												A2(
+												$elm$html$Html$img,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$src(link.logoURL)
+													]),
+												_List_Nil)
+											])),
+										$elm$html$Html$text(link.name)
+									]))
+							]))
 					]))
 			]));
 };
-var $elm$html$Html$a = _VirtualDom_node('a');
-var $elm$json$Json$Encode$string = _Json_wrap;
-var $elm$html$Html$Attributes$stringProperty = F2(
-	function (key, string) {
+var $author$project$Main$viewLinks = function (model) {
+	var _v0 = model.links;
+	if (_v0.b) {
 		return A2(
-			_VirtualDom_property,
-			key,
-			$elm$json$Json$Encode$string(string));
-	});
-var $elm$html$Html$Attributes$href = function (url) {
-	return A2(
-		$elm$html$Html$Attributes$stringProperty,
-		'href',
-		_VirtualDom_noJavaScriptUri(url));
+			$elm$html$Html$div,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$header,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('bar')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$a,
+							_List_fromArray(
+								[
+									$elm$html$Html$Events$onClick($author$project$Main$ReloadLinks)
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text(' ⟳')
+								])),
+							A2(
+							$elm$html$Html$a,
+							_List_fromArray(
+								[
+									$elm$html$Html$Events$onClick($author$project$Main$AddLink)
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text(' + ')
+								]))
+						])),
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('icon-grid')
+						]),
+					A2($elm$core$List$map, $author$project$Main$viewLink, model.links))
+				]));
+	} else {
+		return $elm$html$Html$text('No Links!');
+	}
 };
+var $author$project$Main$AddWatch = {$: 'AddWatch'};
+var $author$project$Main$ReloadWatches = {$: 'ReloadWatches'};
+var $elm$html$Html$ul = _VirtualDom_node('ul');
 var $elm$html$Html$li = _VirtualDom_node('li');
 var $author$project$Main$displayResult = function (node) {
 	return A2(
@@ -6320,24 +6503,16 @@ var $author$project$Main$displayResult = function (node) {
 				$elm$html$Html$text(' :: ' + node.title)
 			]));
 };
-var $elm$html$Html$ul = _VirtualDom_node('ul');
 var $author$project$Main$viewWatch = function (watch) {
 	var _v0 = watch.results;
 	if (!_v0.b) {
-		return $elm$html$Html$text('');
+		return $elm$html$Html$text('No watch items!');
 	} else {
 		return A2(
 			$elm$html$Html$div,
 			_List_Nil,
 			_List_fromArray(
 				[
-					A2(
-					$elm$html$Html$h2,
-					_List_Nil,
-					_List_fromArray(
-						[
-							$elm$html$Html$text('The Watches')
-						])),
 					A2(
 					$elm$html$Html$ul,
 					_List_Nil,
@@ -6348,7 +6523,8 @@ var $author$project$Main$viewWatch = function (watch) {
 							_List_Nil,
 							_List_fromArray(
 								[
-									$elm$html$Html$text(watch.repo + ' :: '),
+									$elm$html$Html$text(watch.repo),
+									$elm$html$Html$text(' :: '),
 									$elm$html$Html$text(watch.name),
 									A2(
 									$elm$html$Html$ul,
@@ -6359,40 +6535,50 @@ var $author$project$Main$viewWatch = function (watch) {
 				]));
 	}
 };
-var $author$project$Main$viewData = function (model) {
-	switch (model.$) {
-		case 'Failure':
-			return A2(
-				$elm$html$Html$div,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$elm$html$Html$text('I can\'t load the watches'),
-						A2(
-						$elm$html$Html$button,
-						_List_fromArray(
-							[
-								$elm$html$Html$Events$onClick($author$project$Main$MorePlease)
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text('Try agan!')
-							]))
-					]));
-		case 'Loading':
-			return $elm$html$Html$text('Loading...');
-		case 'WatchSuccess':
-			var watches = model.a;
-			return A2(
-				$elm$html$Html$div,
-				_List_Nil,
-				A2($elm$core$List$map, $author$project$Main$viewWatch, watches));
-		default:
-			var links = model.a;
-			return A2(
-				$elm$html$Html$div,
-				_List_Nil,
-				A2($elm$core$List$map, $author$project$Main$viewLink, links));
+var $author$project$Main$viewWatches = function (model) {
+	var _v0 = model.watches;
+	if (_v0.b) {
+		return A2(
+			$elm$html$Html$div,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$header,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('bar')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$a,
+							_List_fromArray(
+								[
+									$elm$html$Html$Events$onClick($author$project$Main$ReloadWatches)
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text(' ⟳')
+								])),
+							A2(
+							$elm$html$Html$a,
+							_List_fromArray(
+								[
+									$elm$html$Html$Events$onClick($author$project$Main$AddWatch)
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text(' + ')
+								]))
+						])),
+					A2(
+					$elm$html$Html$ul,
+					_List_Nil,
+					A2($elm$core$List$map, $author$project$Main$viewWatch, model.watches))
+				]));
+	} else {
+		return $elm$html$Html$text('No Watches!');
 	}
 };
 var $author$project$Main$view = function (model) {
@@ -6401,7 +6587,48 @@ var $author$project$Main$view = function (model) {
 		_List_Nil,
 		_List_fromArray(
 			[
-				$author$project$Main$viewData(model)
+				A2(
+				$author$project$Main$mainEle,
+				_List_Nil,
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('grid')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('col')
+									]),
+								_List_fromArray(
+									[
+										$author$project$Main$viewWatches(model)
+									])),
+								A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('col')
+									]),
+								_List_fromArray(
+									[
+										$author$project$Main$viewLinks(model)
+									]))
+							])),
+						A2(
+						$elm$html$Html$footer,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('the foot')
+							]))
+					]))
 			]));
 };
 var $author$project$Main$main = $elm$browser$Browser$element(
