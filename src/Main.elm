@@ -3,24 +3,23 @@ module Main exposing (..)
 import Browser
 import Data
 import Html exposing (..)
-import Html.Attributes exposing (href, style)
+import Html.Attributes exposing (href)
 import Html.Events exposing (..)
 import Http
 import Json.Decode as Decode
     exposing
         ( Decoder
         , bool
-        , decodeString
         , field
         , int
         , list
-        , map
         , map5
         , map6
         , string
         )
 
 
+main : Program () Model Msg
 main =
     Browser.element
         { init = init
@@ -33,7 +32,8 @@ main =
 type Model
     = Failure
     | Loading
-    | Success (List Data.Watch)
+    | WatchSuccess (List Data.Watch)
+    | LinkSuccess (List Data.Link)
 
 
 initialModel : { watches : List Data.Watch, links : List Data.Link }
@@ -47,7 +47,8 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( Loading
     , Cmd.batch
-        [ getWatches
+        [ getLinks
+        , getWatches
         ]
     )
 
@@ -55,34 +56,50 @@ init _ =
 type Msg
     = MorePlease
     | GetWatches (Result Http.Error (List Data.Watch))
+    | GetLinks (Result Http.Error (List Data.Link))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update msg _ =
     case msg of
         MorePlease ->
-            ( Loading, getWatches )
+            ( Loading, Cmd.batch [ getLinks, getWatches ] )
 
         GetWatches result ->
             case result of
                 Ok watches ->
-                    ( Success watches, Cmd.none )
+                    ( WatchSuccess watches, Cmd.none )
+
+                Err _ ->
+                    ( Failure, Cmd.none )
+
+        GetLinks result ->
+            case result of
+                Ok links ->
+                    ( LinkSuccess links, Cmd.none )
 
                 Err _ ->
                     ( Failure, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     Sub.none
 
 
 view : Model -> Html Msg
 view model =
     div []
-        [ h2 [] [ text "Watches" ]
-        , viewWatches model
+        [ viewData model
         ]
+
+
+getLinks : Cmd Msg
+getLinks =
+    Http.get
+        { url = "/links"
+        , expect = Http.expectJson GetLinks linkListDecoder
+        }
 
 
 getWatches : Cmd Msg
@@ -98,6 +115,11 @@ linkListDecoder =
     list linkDecoder
 
 
+watchListDecoder : Decoder (List Data.Watch)
+watchListDecoder =
+    list watchDecoder
+
+
 linkDecoder : Decoder Data.Link
 linkDecoder =
     map6 Data.Link
@@ -107,11 +129,6 @@ linkDecoder =
         (field "name" string)
         (field "logo_url" string)
         (field "shared" bool)
-
-
-watchListDecoder : Decoder (List Data.Watch)
-watchListDecoder =
-    list watchDecoder
 
 
 watchDecoder : Decoder Data.Watch
@@ -140,8 +157,8 @@ repoInfoDecoder =
         (field "nameWithOwner" string)
 
 
-viewWatches : Model -> Html Msg
-viewWatches model =
+viewData : Model -> Html Msg
+viewData model =
     case model of
         Failure ->
             div []
@@ -152,9 +169,20 @@ viewWatches model =
         Loading ->
             text "Loading..."
 
-        Success watches ->
+        WatchSuccess watches ->
             div []
                 (List.map viewWatch watches)
+
+        LinkSuccess links ->
+            div []
+                (List.map viewLink links)
+
+
+viewLink : Data.Link -> Html Msg
+viewLink link =
+    div []
+        [ h2 [] [ text link.name ]
+        ]
 
 
 viewWatch : Data.Watch -> Html Msg
@@ -164,12 +192,15 @@ viewWatch watch =
             text ""
 
         _ ->
-            ul []
-                [ li
-                    []
-                    [ text (watch.repo ++ " :: ")
-                    , text watch.name
-                    , ul [] (List.map displayResult watch.results)
+            div []
+                [ h2 [] [ text "The Watches" ]
+                , ul []
+                    [ li
+                        []
+                        [ text (watch.repo ++ " :: ")
+                        , text watch.name
+                        , ul [] (List.map displayResult watch.results)
+                        ]
                     ]
                 ]
 

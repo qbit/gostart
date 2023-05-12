@@ -5336,8 +5336,8 @@ var $elm$core$Task$perform = F2(
 var $elm$browser$Browser$element = _Browser_element;
 var $author$project$Main$Loading = {$: 'Loading'};
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
-var $author$project$Main$GetWatches = function (a) {
-	return {$: 'GetWatches', a: a};
+var $author$project$Main$GetLinks = function (a) {
+	return {$: 'GetLinks', a: a};
 };
 var $elm$json$Json$Decode$decodeString = _Json_runOnString;
 var $elm$http$Http$BadStatus_ = F2(
@@ -6126,13 +6126,38 @@ var $elm$http$Http$get = function (r) {
 	return $elm$http$Http$request(
 		{body: $elm$http$Http$emptyBody, expect: r.expect, headers: _List_Nil, method: 'GET', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
 };
+var $author$project$Data$Link = F6(
+	function (id, createdAt, url, name, logoURL, shared) {
+		return {createdAt: createdAt, id: id, logoURL: logoURL, name: name, shared: shared, url: url};
+	});
+var $elm$json$Json$Decode$bool = _Json_decodeBool;
+var $elm$json$Json$Decode$field = _Json_decodeField;
+var $elm$json$Json$Decode$int = _Json_decodeInt;
+var $elm$json$Json$Decode$map6 = _Json_map6;
+var $elm$json$Json$Decode$string = _Json_decodeString;
+var $author$project$Main$linkDecoder = A7(
+	$elm$json$Json$Decode$map6,
+	$author$project$Data$Link,
+	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$int),
+	A2($elm$json$Json$Decode$field, 'created_at', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'url', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'logo_url', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'shared', $elm$json$Json$Decode$bool));
 var $elm$json$Json$Decode$list = _Json_decodeList;
+var $author$project$Main$linkListDecoder = $elm$json$Json$Decode$list($author$project$Main$linkDecoder);
+var $author$project$Main$getLinks = $elm$http$Http$get(
+	{
+		expect: A2($elm$http$Http$expectJson, $author$project$Main$GetLinks, $author$project$Main$linkListDecoder),
+		url: '/links'
+	});
+var $author$project$Main$GetWatches = function (a) {
+	return {$: 'GetWatches', a: a};
+};
 var $author$project$Data$Watch = F5(
 	function (ownerId, name, repo, resultCount, results) {
 		return {name: name, ownerId: ownerId, repo: repo, resultCount: resultCount, results: results};
 	});
-var $elm$json$Json$Decode$field = _Json_decodeField;
-var $elm$json$Json$Decode$int = _Json_decodeInt;
 var $elm$json$Json$Decode$map5 = _Json_map5;
 var $author$project$Data$Node = F5(
 	function (number, createdAt, repository, title, url) {
@@ -6141,7 +6166,6 @@ var $author$project$Data$Node = F5(
 var $author$project$Data$RepoInfo = function (nameWithOwner) {
 	return {nameWithOwner: nameWithOwner};
 };
-var $elm$json$Json$Decode$string = _Json_decodeString;
 var $author$project$Main$repoInfoDecoder = A2(
 	$elm$json$Json$Decode$map,
 	$author$project$Data$RepoInfo,
@@ -6176,38 +6200,53 @@ var $author$project$Main$init = function (_v0) {
 		$author$project$Main$Loading,
 		$elm$core$Platform$Cmd$batch(
 			_List_fromArray(
-				[$author$project$Main$getWatches])));
+				[$author$project$Main$getLinks, $author$project$Main$getWatches])));
 };
 var $elm$core$Platform$Sub$batch = _Platform_batch;
 var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
-var $author$project$Main$subscriptions = function (model) {
+var $author$project$Main$subscriptions = function (_v0) {
 	return $elm$core$Platform$Sub$none;
 };
 var $author$project$Main$Failure = {$: 'Failure'};
-var $author$project$Main$Success = function (a) {
-	return {$: 'Success', a: a};
+var $author$project$Main$LinkSuccess = function (a) {
+	return {$: 'LinkSuccess', a: a};
+};
+var $author$project$Main$WatchSuccess = function (a) {
+	return {$: 'WatchSuccess', a: a};
 };
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Main$update = F2(
-	function (msg, model) {
-		if (msg.$ === 'MorePlease') {
-			return _Utils_Tuple2($author$project$Main$Loading, $author$project$Main$getWatches);
-		} else {
-			var result = msg.a;
-			if (result.$ === 'Ok') {
-				var watches = result.a;
+	function (msg, _v0) {
+		switch (msg.$) {
+			case 'MorePlease':
 				return _Utils_Tuple2(
-					$author$project$Main$Success(watches),
-					$elm$core$Platform$Cmd$none);
-			} else {
-				return _Utils_Tuple2($author$project$Main$Failure, $elm$core$Platform$Cmd$none);
-			}
+					$author$project$Main$Loading,
+					$elm$core$Platform$Cmd$batch(
+						_List_fromArray(
+							[$author$project$Main$getLinks, $author$project$Main$getWatches])));
+			case 'GetWatches':
+				var result = msg.a;
+				if (result.$ === 'Ok') {
+					var watches = result.a;
+					return _Utils_Tuple2(
+						$author$project$Main$WatchSuccess(watches),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2($author$project$Main$Failure, $elm$core$Platform$Cmd$none);
+				}
+			default:
+				var result = msg.a;
+				if (result.$ === 'Ok') {
+					var links = result.a;
+					return _Utils_Tuple2(
+						$author$project$Main$LinkSuccess(links),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2($author$project$Main$Failure, $elm$core$Platform$Cmd$none);
+				}
 		}
 	});
 var $elm$html$Html$div = _VirtualDom_node('div');
-var $elm$html$Html$h2 = _VirtualDom_node('h2');
-var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $author$project$Main$MorePlease = {$: 'MorePlease'};
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
@@ -6226,6 +6265,24 @@ var $elm$html$Html$Events$onClick = function (msg) {
 		$elm$html$Html$Events$on,
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
+};
+var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $elm$html$Html$h2 = _VirtualDom_node('h2');
+var $author$project$Main$viewLink = function (link) {
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$h2,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text(link.name)
+					]))
+			]));
 };
 var $elm$html$Html$a = _VirtualDom_node('a');
 var $elm$json$Json$Encode$string = _Json_wrap;
@@ -6270,26 +6327,39 @@ var $author$project$Main$viewWatch = function (watch) {
 		return $elm$html$Html$text('');
 	} else {
 		return A2(
-			$elm$html$Html$ul,
+			$elm$html$Html$div,
 			_List_Nil,
 			_List_fromArray(
 				[
 					A2(
-					$elm$html$Html$li,
+					$elm$html$Html$h2,
 					_List_Nil,
 					_List_fromArray(
 						[
-							$elm$html$Html$text(watch.repo + ' :: '),
-							$elm$html$Html$text(watch.name),
+							$elm$html$Html$text('The Watches')
+						])),
+					A2(
+					$elm$html$Html$ul,
+					_List_Nil,
+					_List_fromArray(
+						[
 							A2(
-							$elm$html$Html$ul,
+							$elm$html$Html$li,
 							_List_Nil,
-							A2($elm$core$List$map, $author$project$Main$displayResult, watch.results))
+							_List_fromArray(
+								[
+									$elm$html$Html$text(watch.repo + ' :: '),
+									$elm$html$Html$text(watch.name),
+									A2(
+									$elm$html$Html$ul,
+									_List_Nil,
+									A2($elm$core$List$map, $author$project$Main$displayResult, watch.results))
+								]))
 						]))
 				]));
 	}
 };
-var $author$project$Main$viewWatches = function (model) {
+var $author$project$Main$viewData = function (model) {
 	switch (model.$) {
 		case 'Failure':
 			return A2(
@@ -6311,12 +6381,18 @@ var $author$project$Main$viewWatches = function (model) {
 					]));
 		case 'Loading':
 			return $elm$html$Html$text('Loading...');
-		default:
+		case 'WatchSuccess':
 			var watches = model.a;
 			return A2(
 				$elm$html$Html$div,
 				_List_Nil,
 				A2($elm$core$List$map, $author$project$Main$viewWatch, watches));
+		default:
+			var links = model.a;
+			return A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				A2($elm$core$List$map, $author$project$Main$viewLink, links));
 	}
 };
 var $author$project$Main$view = function (model) {
@@ -6325,14 +6401,7 @@ var $author$project$Main$view = function (model) {
 		_List_Nil,
 		_List_fromArray(
 			[
-				A2(
-				$elm$html$Html$h2,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$elm$html$Html$text('Watches')
-					])),
-				$author$project$Main$viewWatches(model)
+				$author$project$Main$viewData(model)
 			]));
 };
 var $author$project$Main$main = $elm$browser$Browser$element(
