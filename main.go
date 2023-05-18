@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -107,12 +108,15 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(OwnerCtx)
 
+	var liveServer http.Handler
 	if *dev {
-		liveServer := http.FileServer(http.Dir("./assets"))
-		r.Mount("/", liveServer)
+		liveServer = http.FileServer(http.Dir("./assets"))
 	} else {
-		r.Mount("/", http.FileServer(http.FS(assets)))
+		embFS, _ := fs.Sub(assets, "assets")
+		liveServer = http.FileServer(http.FS(embFS))
 	}
+
+	r.Mount("/", liveServer)
 	r.Route("/pullrequests", func(r chi.Router) {
 		r.Use(render.SetContentType(render.ContentTypeJSON))
 		r.Get("/", pullrequestsGET)
