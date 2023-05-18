@@ -481,7 +481,7 @@ viewLink link =
                 [ div
                     []
                     [ header []
-                        [ img [ src link.logoURL ] []
+                        [ img [ src ("/icons/" ++ String.fromInt link.id) ] []
                         ]
                     , text link.name
                     ]

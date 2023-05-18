@@ -6911,7 +6911,8 @@ var $author$project$Main$viewLink = function (link) {
 												$elm$html$Html$img,
 												_List_fromArray(
 													[
-														$elm$html$Html$Attributes$src(link.logoURL)
+														$elm$html$Html$Attributes$src(
+														'/icons/' + $elm$core$String$fromInt(link.id))
 													]),
 												_List_Nil)
 											])),
