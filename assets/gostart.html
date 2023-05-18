@@ -44,11 +44,29 @@
       }
 
       .bar {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
           padding: 5px !important;
           border-bottom: 1px solid black;
           border-radius: 10px 10px 0px 0px;
           background-color: #dedeff;
+          cursor: pointer;
+      }
+
+      .bar-left {
+          text-align: left;
+      }
+
+      .bar-right {
           text-align: right;
+      }
+
+      .form-container {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+      }
+
+      .form-content {
       }
 
       header {

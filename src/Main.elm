@@ -3,7 +3,7 @@ module Main exposing (..)
 import Browser
 import Data
 import Html exposing (..)
-import Html.Attributes exposing (class, href, src)
+import Html.Attributes exposing (class, href, name, placeholder, src, type_)
 import Html.Events exposing (..)
 import Http
 import Json.Decode as Decode
@@ -17,6 +17,7 @@ import Json.Decode as Decode
         , map6
         , string
         )
+import Json.Encode as Encode
 
 
 main : Program () Model Msg
@@ -29,6 +30,18 @@ main =
         }
 
 
+type Msg
+    = Reload
+    | ReloadLinks
+    | ReloadWatches
+    | GotWatches (Result Http.Error (List Data.Watch))
+    | GotLinks (Result Http.Error (List Data.Link))
+    | SubmitWatch
+    | SubmitLink
+    | HideWatchedItem Int String
+    | HidItem (Result Http.Error String)
+
+
 type Status
     = Loading
     | LoadedWatches (List Data.Watch)
@@ -36,11 +49,27 @@ type Status
     | Errored String
 
 
+type alias NewWatch =
+    { name : String
+    , repo : String
+    }
+
+
+type alias NewLink =
+    { name : String
+    , url : String
+    , shared : Bool
+    , logo_url : String
+    }
+
+
 type alias Model =
     { watches : List Data.Watch
     , links : List Data.Link
     , errors : List String
     , status : Status
+    , newlink : NewLink
+    , newwatch : NewWatch
     }
 
 
@@ -50,6 +79,16 @@ initialModel =
     , links = []
     , errors = []
     , status = Loading
+    , newlink =
+        { name = ""
+        , url = ""
+        , shared = False
+        , logo_url = ""
+        }
+    , newwatch =
+        { name = ""
+        , repo = ""
+        }
     }
 
 
@@ -58,24 +97,40 @@ init _ =
     ( initialModel, Cmd.batch [ getLinks, getWatches ] )
 
 
-type Msg
-    = Reload
-    | ReloadLinks
-    | ReloadWatches
-    | AddLink
-    | AddWatch
-    | GotWatches (Result Http.Error (List Data.Watch))
-    | GotLinks (Result Http.Error (List Data.Link))
+hideWatched : Int -> String -> Cmd Msg
+hideWatched id repo =
+    let
+        body =
+            Encode.object
+                [ ( "number", Encode.int id )
+                , ( "repo", Encode.string repo )
+                ]
+                |> Http.jsonBody
+    in
+    Http.post
+        { url = "/prignores"
+        , body = body
+        , expect = Http.expectJson HidItem string
+        }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        AddLink ->
-            ( model, Cmd.none )
+        HidItem (Err _) ->
+            ( { model | status = Errored "Server error when hiding a watch item!" }, Cmd.none )
 
-        AddWatch ->
-            ( model, Cmd.none )
+        HidItem (Ok _) ->
+            ( model, Cmd.batch [ getWatches, getLinks ] )
+
+        HideWatchedItem itemId repo ->
+            ( model, Cmd.batch [ hideWatched itemId repo ] )
+
+        SubmitWatch ->
+            ( { model | newwatch = model.newwatch }, Cmd.batch [ getWatches ] )
+
+        SubmitLink ->
+            ( model, Cmd.batch [ getLinks ] )
 
         Reload ->
             ( model, Cmd.batch [ getWatches, getLinks ] )
@@ -154,8 +209,6 @@ view model =
                     [ viewLinks model
                     ]
                 ]
-            , footer []
-                [ text "the foot" ]
             ]
         ]
 
@@ -223,40 +276,96 @@ repoInfoDecoder =
         (field "nameWithOwner" string)
 
 
+watchForm : Model -> Html Msg
+watchForm _ =
+    div []
+        [ createForm SubmitWatch
+            (div
+                []
+                [ labeledTextBox "Item: " "some string..." ""
+                , labeledTextBox "Repository: " "NixOS/nixpkgs" ""
+                ]
+            )
+        ]
+
+
+linkForm : Model -> Html Msg
+linkForm _ =
+    div []
+        [ createForm SubmitLink
+            (div
+                []
+                [ labeledTextBox "Name: " "Potato" ""
+                , labeledTextBox "URL: " "https://...." ""
+                , labeledTextBox "Icon: " "https://...." ""
+                ]
+            )
+        ]
+
+
+labeledTextBox : String -> String -> String -> Html Msg
+labeledTextBox labelStr placeStr inputName =
+    label []
+        [ text labelStr
+        , input
+            [ type_ "text"
+            , name inputName
+            , placeholder placeStr
+            ]
+            []
+        ]
+
+
+createForm : Msg -> Html Msg -> Html Msg
+createForm action content =
+    details []
+        [ summary [] [ text "" ]
+        , Html.form
+            [ onSubmit action
+            , class "form-container"
+            ]
+            [ div [ class "form-content" ]
+                [ content
+                , button [] [ text "Submit" ]
+                ]
+            ]
+        ]
+
+
+bar : Html Msg -> Html Msg -> Html Msg
+bar left right =
+    header [ class "bar" ]
+        [ div [ class "bar-left" ] [ left ]
+        , div [ class "bar-right" ] [ right ]
+        ]
+
+
 viewLinks : Model -> Html Msg
 viewLinks model =
-    case model.links of
-        _ :: _ ->
-            div []
-                [ header [ class "bar" ]
-                    [ a [ onClick ReloadLinks ] [ text " ⟳" ]
-                    , a [ onClick AddLink ] [ text " + " ]
-                    ]
-                , div
+    div []
+        [ bar (linkForm model) (a [ onClick ReloadLinks ] [ text " ⟳" ])
+        , case model.links of
+            _ :: _ ->
+                div
                     [ class "icon-grid" ]
                     (List.map viewLink model.links)
-                ]
 
-        [] ->
-            text "No Links!"
+            [] ->
+                text "No links found!"
+        ]
 
 
 viewWatches : Model -> Html Msg
 viewWatches model =
-    case model.watches of
-        _ :: _ ->
-            div []
-                [ header [ class "bar" ]
-                    [ a [ onClick ReloadWatches ] [ text " ⟳" ]
-                    , a [ onClick AddWatch ] [ text " + " ]
-                    ]
-                , ul
-                    []
-                    (List.map viewWatch model.watches)
-                ]
+    div []
+        [ bar (watchForm model) (a [ onClick ReloadWatches ] [ text " ⟳" ])
+        , case model.watches of
+            _ :: _ ->
+                ul [] (List.map viewWatch model.watches)
 
-        [] ->
-            text "No Watches!"
+            [] ->
+                text "No watches found!"
+        ]
 
 
 viewLink : Data.Link -> Html Msg
@@ -287,9 +396,11 @@ viewWatch watch =
                 [ ul []
                     [ li
                         []
-                        [ text watch.repo
-                        , text " :: "
-                        , text watch.name
+                        [ b []
+                            [ text watch.repo
+                            , text " -> "
+                            , text watch.name
+                            ]
                         , ul [] (List.map displayResult watch.results)
                         ]
                     ]
@@ -300,5 +411,8 @@ displayResult : Data.Node -> Html Msg
 displayResult node =
     li []
         [ a [ href node.url ] [ text (String.fromInt node.number) ]
-        , text (" :: " ++ node.title)
+        , text " :: "
+        , span [ onClick (HideWatchedItem node.number node.repository.nameWithOwner) ] [ text "⦸" ]
+        , text " :: "
+        , text node.title
         ]
