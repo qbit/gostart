@@ -39,7 +39,7 @@ type Msg
     | SubmitWatch
     | SubmitLink
     | HideWatchedItem Int String
-    | HidItem (Result Http.Error String)
+    | HidItem (Result Http.Error ())
 
 
 type Status
@@ -110,7 +110,7 @@ hideWatched id repo =
     Http.post
         { url = "/prignores"
         , body = body
-        , expect = Http.expectJson HidItem string
+        , expect = Http.expectWhatever HidItem
         }
 
 

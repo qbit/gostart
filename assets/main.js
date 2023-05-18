@@ -6236,6 +6236,23 @@ var $elm$core$List$head = function (list) {
 var $author$project$Main$HidItem = function (a) {
 	return {$: 'HidItem', a: a};
 };
+var $elm$http$Http$expectBytesResponse = F2(
+	function (toMsg, toResult) {
+		return A3(
+			_Http_expect,
+			'arraybuffer',
+			_Http_toDataView,
+			A2($elm$core$Basics$composeR, toResult, toMsg));
+	});
+var $elm$http$Http$expectWhatever = function (toMsg) {
+	return A2(
+		$elm$http$Http$expectBytesResponse,
+		toMsg,
+		$elm$http$Http$resolve(
+			function (_v0) {
+				return $elm$core$Result$Ok(_Utils_Tuple0);
+			}));
+};
 var $elm$json$Json$Encode$int = _Json_wrap;
 var $elm$http$Http$jsonBody = function (value) {
 	return A2(
@@ -6277,7 +6294,7 @@ var $author$project$Main$hideWatched = F2(
 		return $elm$http$Http$post(
 			{
 				body: body,
-				expect: A2($elm$http$Http$expectJson, $author$project$Main$HidItem, $elm$json$Json$Decode$string),
+				expect: $elm$http$Http$expectWhatever($author$project$Main$HidItem),
 				url: '/prignores'
 			});
 	});
