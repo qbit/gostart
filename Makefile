@@ -13,5 +13,8 @@ sqlc: queries.sql schema.sql
 build:
 	go build
 
+watch:
+	echo src/Main.elm | entr -r elm make src/Main.elm --output=assets/main.js
+
 run: sqlc build
 	./gostart -name startdev -db ./test.db

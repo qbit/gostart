@@ -19,11 +19,11 @@
         in {
           gostart = pkgs.buildGo120Module {
             pname = "gostart";
-            version = "v0.1.12";
+            version = "v0.2.0";
             src = ./.;
 
             vendorSha256 =
-              "sha256-DvtZQK0bOXJfBYXnT8cRH6W2BOktJMsQCB8BQFw30T0=";
+              "sha256-IgXMI0+7ZQef1D7N4ObXSoZBgHIvlYuAY2v3ZUc7Jlk=";
           };
         });
 
@@ -38,15 +38,15 @@
               echo "Go `${pkgs.go}/bin/go version`"
             '';
             nativeBuildInputs = with pkgs; [
+              elmPackages.elm
+              entr
               git
+              go-tools
               go_1_20
               gopls
-              go-tools
+              rlwrap
               sqlc
               sqlite
-              rlwrap
-              elmPackages.elm
-              elmPackages.elm-live
             ];
           };
         });
