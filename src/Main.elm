@@ -3,7 +3,7 @@ module Main exposing (..)
 import Browser
 import Data
 import Html exposing (..)
-import Html.Attributes exposing (class, href, name, placeholder, src, type_)
+import Html.Attributes exposing (checked, class, classList, href, name, placeholder, src, type_)
 import Html.Events exposing (..)
 import Http
 import Json.Decode as Decode
@@ -36,10 +36,15 @@ type Msg
     | ReloadWatches
     | GotWatches (Result Http.Error (List Data.Watch))
     | GotLinks (Result Http.Error (List Data.Link))
-    | SubmitWatch
-    | SubmitLink
-    | HideWatchedItem Int String
+    | AddedLink (Result Http.Error ())
+    | DeletedLink (Result Http.Error ())
     | HidItem (Result Http.Error ())
+    | SubmitLink
+    | GotNewLink NewLink
+    | SubmitWatch
+    | GotNewWatch NewWatch
+    | HideWatchedItem Int String
+    | DeleteLink Int
 
 
 type Status
@@ -114,32 +119,103 @@ hideWatched id repo =
         }
 
 
+addLink : Model -> Cmd Msg
+addLink model =
+    let
+        body =
+            Encode.object
+                [ ( "name", Encode.string model.newlink.name )
+                , ( "url", Encode.string model.newlink.url )
+                , ( "logo_url", Encode.string model.newlink.logo_url )
+                , ( "shared", Encode.bool model.newlink.shared )
+                ]
+                |> Http.jsonBody
+    in
+    Http.post
+        { url = "/links"
+        , body = body
+        , expect = Http.expectWhatever AddedLink
+        }
+
+
+addWatch : Model -> Cmd Msg
+addWatch model =
+    let
+        body =
+            Encode.object
+                [ ( "name", Encode.string model.newwatch.name )
+                , ( "repo", Encode.string model.newwatch.repo )
+                ]
+                |> Http.jsonBody
+    in
+    Http.post
+        { url = "/watches"
+        , body = body
+        , expect = Http.expectWhatever AddedLink
+        }
+
+
+deleteLink : Int -> Cmd Msg
+deleteLink linkId =
+    Http.request
+        { url = "/links/" ++ String.fromInt linkId
+        , method = "DELETE"
+        , timeout = Nothing
+        , tracker = Nothing
+        , headers = []
+        , body = Http.emptyBody
+        , expect = Http.expectWhatever DeletedLink
+        }
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        DeleteLink linkId ->
+            ( model, deleteLink linkId )
+
+        GotNewWatch newwatch ->
+            ( { model | newwatch = newwatch }, Cmd.none )
+
+        GotNewLink newlink ->
+            ( { model | newlink = newlink }, Cmd.none )
+
+        AddedLink (Err _) ->
+            ( { model | status = Errored "Server error adding a link!" }, Cmd.none )
+
+        AddedLink (Ok _) ->
+            ( { model | newlink = initialModel.newlink }, getLinks )
+
+        DeletedLink (Ok _) ->
+            ( model, getLinks )
+
+        DeletedLink (Err _) ->
+            ( { model | status = Errored "Server error deleting link!" }, Cmd.none )
+
         HidItem (Err _) ->
             ( { model | status = Errored "Server error when hiding a watch item!" }, Cmd.none )
 
         HidItem (Ok _) ->
-            ( model, Cmd.batch [ getWatches, getLinks ] )
+            ( model, getWatches )
 
         HideWatchedItem itemId repo ->
-            ( model, Cmd.batch [ hideWatched itemId repo ] )
+            ( model, hideWatched itemId repo )
 
         SubmitWatch ->
-            ( { model | newwatch = model.newwatch }, Cmd.batch [ getWatches ] )
+            -- TODO
+            ( model, addWatch model )
 
         SubmitLink ->
-            ( model, Cmd.batch [ getLinks ] )
+            ( model, addLink model )
 
         Reload ->
             ( model, Cmd.batch [ getWatches, getLinks ] )
 
         ReloadWatches ->
-            ( model, Cmd.batch [ getWatches ] )
+            ( model, getWatches )
 
         ReloadLinks ->
-            ( model, Cmd.batch [ getLinks ] )
+            ( model, getLinks )
 
         GotWatches (Err _) ->
             ( { model | status = Errored "Server error when fetching watches!" }, Cmd.none )
@@ -209,6 +285,19 @@ view model =
                     [ viewLinks model
                     ]
                 ]
+            , div [ class "grid" ]
+                [ case model.status of
+                    Errored e ->
+                        div
+                            [ classList
+                                [ ( "error", True )
+                                ]
+                            ]
+                            [ text e ]
+
+                    _ ->
+                        text ""
+                ]
             ]
         ]
 
@@ -276,40 +365,53 @@ repoInfoDecoder =
         (field "nameWithOwner" string)
 
 
-watchForm : Model -> Html Msg
-watchForm _ =
+watchForm : NewWatch -> Html Msg
+watchForm newwatch =
     div []
         [ createForm SubmitWatch
             (div
                 []
-                [ labeledTextBox "Item: " "some string..." ""
-                , labeledTextBox "Repository: " "NixOS/nixpkgs" ""
+                [ labeledTextBox "Item: " "some string..." "name" (\v -> GotNewWatch { newwatch | name = v })
+                , labeledTextBox "Repository: " "NixOS/nixpkgs" "repo" (\v -> GotNewWatch { newwatch | repo = v })
                 ]
             )
         ]
 
 
-linkForm : Model -> Html Msg
-linkForm _ =
+linkForm : NewLink -> Html Msg
+linkForm newlink =
     div []
         [ createForm SubmitLink
-            (div
-                []
-                [ labeledTextBox "Name: " "Potato" ""
-                , labeledTextBox "URL: " "https://...." ""
-                , labeledTextBox "Icon: " "https://...." ""
+            (div [ class "form-content" ]
+                [ div
+                    []
+                    [ labeledTextBox "Name: " "Potato" "name" (\v -> GotNewLink { newlink | name = v })
+                    , labeledTextBox "URL: " "https://...." "url" (\v -> GotNewLink { newlink | url = v })
+                    , labeledTextBox "Icon: " "https://...." "logo_url" (\v -> GotNewLink { newlink | logo_url = v })
+                    , label []
+                        [ text "Shared: "
+                        , input
+                            [ type_ "checkbox"
+                            , name "linkshared"
+                            , onCheck (\v -> GotNewLink { newlink | shared = v })
+                            , checked <| newlink.shared
+                            ]
+                            []
+                        ]
+                    ]
                 ]
             )
         ]
 
 
-labeledTextBox : String -> String -> String -> Html Msg
-labeledTextBox labelStr placeStr inputName =
+labeledTextBox : String -> String -> String -> (String -> msg) -> Html msg
+labeledTextBox labelStr placeStr inputName inputHandler =
     label []
         [ text labelStr
         , input
             [ type_ "text"
             , name inputName
+            , onInput inputHandler
             , placeholder placeStr
             ]
             []
@@ -326,7 +428,9 @@ createForm action content =
             ]
             [ div [ class "form-content" ]
                 [ content
-                , button [] [ text "Submit" ]
+                , button
+                    []
+                    [ text "Submit" ]
                 ]
             ]
         ]
@@ -343,7 +447,7 @@ bar left right =
 viewLinks : Model -> Html Msg
 viewLinks model =
     div []
-        [ bar (linkForm model) (a [ onClick ReloadLinks ] [ text " ⟳" ])
+        [ bar (linkForm model.newlink) (a [ onClick ReloadLinks ] [ text " ⟳" ])
         , case model.links of
             _ :: _ ->
                 div
@@ -358,7 +462,7 @@ viewLinks model =
 viewWatches : Model -> Html Msg
 viewWatches model =
     div []
-        [ bar (watchForm model) (a [ onClick ReloadWatches ] [ text " ⟳" ])
+        [ bar (watchForm model.newwatch) (a [ onClick ReloadWatches ] [ text " ⟳" ])
         , case model.watches of
             _ :: _ ->
                 ul [] (List.map viewWatch model.watches)
@@ -371,10 +475,11 @@ viewWatches model =
 viewLink : Data.Link -> Html Msg
 viewLink link =
     div []
-        [ div []
-            [ a [ href link.url ]
+        [ div [ class "icon" ]
+            [ span [ onClick (DeleteLink link.id) ] [ text "×" ]
+            , a [ href link.url ]
                 [ div
-                    [ class "icon" ]
+                    []
                     [ header []
                         [ img [ src link.logoURL ] []
                         ]
