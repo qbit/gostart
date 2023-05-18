@@ -4,14 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
-	"html/template"
 	"image"
 	"image/color"
 	"image/png"
 	"net/http"
 	"strconv"
-	"time"
 	"unicode"
 
 	"github.com/go-chi/chi/v5"
@@ -325,84 +322,5 @@ func linkDELETE(w http.ResponseWriter, r *http.Request) {
 	err = app.queries.DeleteLink(app.ctx, data.DeleteLinkParams{ID: int64(linkID), OwnerID: ownerID})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-var templateFuncs = template.FuncMap{
-	"includeWatch": includeWatch,
-	"remaining": func(d time.Time) string {
-		ct := time.Now()
-		left := d.Sub(ct)
-		return fmt.Sprintf("%3.f", left.Minutes())
-	},
-}
-
-func index(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	systemOwner, err := app.getOwner(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	ownerID, ok := ctx.Value(ownerKey).(int64)
-	if !ok {
-		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
-		return
-	}
-	dbCtx := context.Background()
-	links, err := app.queries.GetAllLinksForOwner(dbCtx, ownerID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	owner, err := app.queries.GetOwner(ctx, ownerID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// TODO: maybe I can do this with an sql join...
-	filteredLinks := []data.Link{}
-	for _, l := range links {
-		if !owner.ShowShared && l.OwnerID != ownerID {
-			continue
-		}
-		filteredLinks = append(filteredLinks, l)
-	}
-
-	prs, err := app.queries.GetAllPullRequests(dbCtx, ownerID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	ignores, err := app.queries.GetAllPullRequestIgnores(ctx, ownerID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	stuff := &Page{
-		Node:          *systemOwner,
-		System:        owner,
-		Title:         "StartPage",
-		Links:         filteredLinks,
-		PullRequests:  prs,
-		Watches:       app.watches.forID(ownerID),
-		CurrentLimits: app.watches.GetLimits(),
-		Ignores:       ignores,
-	}
-
-	stuff.Sort()
-
-	tmpl := template.Must(
-		template.New("").Funcs(templateFuncs).ParseFS(templates, "templates/main.html"),
-	)
-
-	err = tmpl.ExecuteTemplate(w, "main.html", stuff)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
 	}
 }

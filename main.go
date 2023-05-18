@@ -25,9 +25,6 @@ import (
 //go:embed schema.sql
 var schema string
 
-//go:embed templates
-var templates embed.FS
-
 //go:embed assets
 var assets embed.FS
 
@@ -43,6 +40,7 @@ func main() {
 	watchInterval := flag.Int64("refresh", 5, "number of minutes between watch refresh")
 	dbFile := flag.String("db", ":memory:", "path to on-disk database file")
 	tokenFile := flag.String("auth", "", "path to file containing GH auth token")
+	dev := flag.Bool("dev", false, "develop mode, serve live files from ./assets")
 	flag.Parse()
 
 	db, err := sql.Open("sqlite", fmt.Sprintf("%s?cache=shared&mode=rwc", *dbFile))
@@ -104,13 +102,17 @@ func main() {
 		}
 	}()
 
-	liveServer := http.FileServer(http.Dir("./assets"))
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
 	r.Use(OwnerCtx)
 
-	r.Mount("/", liveServer)
+	if *dev {
+		liveServer := http.FileServer(http.Dir("./assets"))
+		r.Mount("/", liveServer)
+	} else {
+		r.Mount("/", http.FileServer(http.FS(assets)))
+	}
 	r.Route("/pullrequests", func(r chi.Router) {
 		r.Use(render.SetContentType(render.ContentTypeJSON))
 		r.Get("/", pullrequestsGET)

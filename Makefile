@@ -1,11 +1,11 @@
-all: sqlc tsc build
+all: sqlc elm build
 
 check:
 	go vet ./...
 	staticcheck ./...
-		
-tsc: assets/main.js
-	tsc assets/main.ts
+
+elm: src/Main.elm
+	elm make src/Main.elm --output=assets/main.js
 
 sqlc: queries.sql schema.sql
 	sqlc generate

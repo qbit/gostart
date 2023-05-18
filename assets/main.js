@@ -6224,18 +6224,10 @@ var $author$project$Main$LoadedLinks = function (a) {
 var $author$project$Main$LoadedWatches = function (a) {
 	return {$: 'LoadedWatches', a: a};
 };
-var $elm$core$List$head = function (list) {
-	if (list.b) {
-		var x = list.a;
-		var xs = list.b;
-		return $elm$core$Maybe$Just(x);
-	} else {
-		return $elm$core$Maybe$Nothing;
-	}
+var $author$project$Main$AddedLink = function (a) {
+	return {$: 'AddedLink', a: a};
 };
-var $author$project$Main$HidItem = function (a) {
-	return {$: 'HidItem', a: a};
-};
+var $elm$json$Json$Encode$bool = _Json_wrap;
 var $elm$http$Http$expectBytesResponse = F2(
 	function (toMsg, toResult) {
 		return A3(
@@ -6253,7 +6245,6 @@ var $elm$http$Http$expectWhatever = function (toMsg) {
 				return $elm$core$Result$Ok(_Utils_Tuple0);
 			}));
 };
-var $elm$json$Json$Encode$int = _Json_wrap;
 var $elm$http$Http$jsonBody = function (value) {
 	return A2(
 		_Http_pair,
@@ -6278,6 +6269,78 @@ var $elm$http$Http$post = function (r) {
 		{body: r.body, expect: r.expect, headers: _List_Nil, method: 'POST', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
 };
 var $elm$json$Json$Encode$string = _Json_wrap;
+var $author$project$Main$addLink = function (model) {
+	var body = $elm$http$Http$jsonBody(
+		$elm$json$Json$Encode$object(
+			_List_fromArray(
+				[
+					_Utils_Tuple2(
+					'name',
+					$elm$json$Json$Encode$string(model.newlink.name)),
+					_Utils_Tuple2(
+					'url',
+					$elm$json$Json$Encode$string(model.newlink.url)),
+					_Utils_Tuple2(
+					'logo_url',
+					$elm$json$Json$Encode$string(model.newlink.logo_url)),
+					_Utils_Tuple2(
+					'shared',
+					$elm$json$Json$Encode$bool(model.newlink.shared))
+				])));
+	return $elm$http$Http$post(
+		{
+			body: body,
+			expect: $elm$http$Http$expectWhatever($author$project$Main$AddedLink),
+			url: '/links'
+		});
+};
+var $author$project$Main$addWatch = function (model) {
+	var body = $elm$http$Http$jsonBody(
+		$elm$json$Json$Encode$object(
+			_List_fromArray(
+				[
+					_Utils_Tuple2(
+					'name',
+					$elm$json$Json$Encode$string(model.newwatch.name)),
+					_Utils_Tuple2(
+					'repo',
+					$elm$json$Json$Encode$string(model.newwatch.repo))
+				])));
+	return $elm$http$Http$post(
+		{
+			body: body,
+			expect: $elm$http$Http$expectWhatever($author$project$Main$AddedLink),
+			url: '/watches'
+		});
+};
+var $author$project$Main$DeletedLink = function (a) {
+	return {$: 'DeletedLink', a: a};
+};
+var $author$project$Main$deleteLink = function (linkId) {
+	return $elm$http$Http$request(
+		{
+			body: $elm$http$Http$emptyBody,
+			expect: $elm$http$Http$expectWhatever($author$project$Main$DeletedLink),
+			headers: _List_Nil,
+			method: 'DELETE',
+			timeout: $elm$core$Maybe$Nothing,
+			tracker: $elm$core$Maybe$Nothing,
+			url: '/links/' + $elm$core$String$fromInt(linkId)
+		});
+};
+var $elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(x);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $author$project$Main$HidItem = function (a) {
+	return {$: 'HidItem', a: a};
+};
+var $elm$json$Json$Encode$int = _Json_wrap;
 var $author$project$Main$hideWatched = F2(
 	function (id, repo) {
 		var body = $elm$http$Http$jsonBody(
@@ -6302,6 +6365,53 @@ var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
+			case 'DeleteLink':
+				var linkId = msg.a;
+				return _Utils_Tuple2(
+					model,
+					$author$project$Main$deleteLink(linkId));
+			case 'GotNewWatch':
+				var newwatch = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{newwatch: newwatch}),
+					$elm$core$Platform$Cmd$none);
+			case 'GotNewLink':
+				var newlink = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{newlink: newlink}),
+					$elm$core$Platform$Cmd$none);
+			case 'AddedLink':
+				if (msg.a.$ === 'Err') {
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								status: $author$project$Main$Errored('Server error adding a link!')
+							}),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{newlink: $author$project$Main$initialModel.newlink}),
+						$author$project$Main$getLinks);
+				}
+			case 'DeletedLink':
+				if (msg.a.$ === 'Ok') {
+					return _Utils_Tuple2(model, $author$project$Main$getLinks);
+				} else {
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								status: $author$project$Main$Errored('Server error deleting link!')
+							}),
+						$elm$core$Platform$Cmd$none);
+				}
 			case 'HidItem':
 				if (msg.a.$ === 'Err') {
 					return _Utils_Tuple2(
@@ -6312,36 +6422,22 @@ var $author$project$Main$update = F2(
 							}),
 						$elm$core$Platform$Cmd$none);
 				} else {
-					return _Utils_Tuple2(
-						model,
-						$elm$core$Platform$Cmd$batch(
-							_List_fromArray(
-								[$author$project$Main$getWatches, $author$project$Main$getLinks])));
+					return _Utils_Tuple2(model, $author$project$Main$getWatches);
 				}
 			case 'HideWatchedItem':
 				var itemId = msg.a;
 				var repo = msg.b;
 				return _Utils_Tuple2(
 					model,
-					$elm$core$Platform$Cmd$batch(
-						_List_fromArray(
-							[
-								A2($author$project$Main$hideWatched, itemId, repo)
-							])));
+					A2($author$project$Main$hideWatched, itemId, repo));
 			case 'SubmitWatch':
 				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{newwatch: model.newwatch}),
-					$elm$core$Platform$Cmd$batch(
-						_List_fromArray(
-							[$author$project$Main$getWatches])));
+					model,
+					$author$project$Main$addWatch(model));
 			case 'SubmitLink':
 				return _Utils_Tuple2(
 					model,
-					$elm$core$Platform$Cmd$batch(
-						_List_fromArray(
-							[$author$project$Main$getLinks])));
+					$author$project$Main$addLink(model));
 			case 'Reload':
 				return _Utils_Tuple2(
 					model,
@@ -6349,17 +6445,9 @@ var $author$project$Main$update = F2(
 						_List_fromArray(
 							[$author$project$Main$getWatches, $author$project$Main$getLinks])));
 			case 'ReloadWatches':
-				return _Utils_Tuple2(
-					model,
-					$elm$core$Platform$Cmd$batch(
-						_List_fromArray(
-							[$author$project$Main$getWatches])));
+				return _Utils_Tuple2(model, $author$project$Main$getWatches);
 			case 'ReloadLinks':
-				return _Utils_Tuple2(
-					model,
-					$elm$core$Platform$Cmd$batch(
-						_List_fromArray(
-							[$author$project$Main$getLinks])));
+				return _Utils_Tuple2(model, $author$project$Main$getLinks);
 			case 'GotWatches':
 				if (msg.a.$ === 'Err') {
 					return _Utils_Tuple2(
@@ -6444,6 +6532,31 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 			$elm$json$Json$Encode$string(string));
 	});
 var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
+var $elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			$elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
+var $elm$core$Tuple$second = function (_v0) {
+	var y = _v0.b;
+	return y;
+};
+var $elm$html$Html$Attributes$classList = function (classes) {
+	return $elm$html$Html$Attributes$class(
+		A2(
+			$elm$core$String$join,
+			' ',
+			A2(
+				$elm$core$List$map,
+				$elm$core$Tuple$first,
+				A2($elm$core$List$filter, $elm$core$Tuple$second, classes))));
+};
 var $elm$html$Html$div = _VirtualDom_node('div');
 var $elm$virtual_dom$VirtualDom$node = function (tag) {
 	return _VirtualDom_node(
@@ -6454,6 +6567,8 @@ var $author$project$Main$mainEle = F2(
 	function (attributes, children) {
 		return A3($elm$html$Html$node, 'main', attributes, children);
 	});
+var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $author$project$Main$ReloadLinks = {$: 'ReloadLinks'};
 var $elm$html$Html$a = _VirtualDom_node('a');
 var $elm$html$Html$header = _VirtualDom_node('header');
@@ -6485,7 +6600,18 @@ var $author$project$Main$bar = F2(
 						[right]))
 				]));
 	});
+var $author$project$Main$GotNewLink = function (a) {
+	return {$: 'GotNewLink', a: a};
+};
 var $author$project$Main$SubmitLink = {$: 'SubmitLink'};
+var $elm$html$Html$Attributes$boolProperty = F2(
+	function (key, bool) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$bool(bool));
+	});
+var $elm$html$Html$Attributes$checked = $elm$html$Html$Attributes$boolProperty('checked');
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$html$Html$details = _VirtualDom_node('details');
 var $elm$html$Html$form = _VirtualDom_node('form');
@@ -6513,8 +6639,6 @@ var $elm$html$Html$Events$onSubmit = function (msg) {
 			$elm$json$Json$Decode$succeed(msg)));
 };
 var $elm$html$Html$summary = _VirtualDom_node('summary');
-var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $author$project$Main$createForm = F2(
 	function (action, content) {
 		return A2(
@@ -6561,10 +6685,41 @@ var $author$project$Main$createForm = F2(
 var $elm$html$Html$input = _VirtualDom_node('input');
 var $elm$html$Html$label = _VirtualDom_node('label');
 var $elm$html$Html$Attributes$name = $elm$html$Html$Attributes$stringProperty('name');
+var $elm$html$Html$Events$alwaysStop = function (x) {
+	return _Utils_Tuple2(x, true);
+};
+var $elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
+	return {$: 'MayStopPropagation', a: a};
+};
+var $elm$html$Html$Events$stopPropagationOn = F2(
+	function (event, decoder) {
+		return A2(
+			$elm$virtual_dom$VirtualDom$on,
+			event,
+			$elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
+	});
+var $elm$json$Json$Decode$at = F2(
+	function (fields, decoder) {
+		return A3($elm$core$List$foldr, $elm$json$Json$Decode$field, decoder, fields);
+	});
+var $elm$html$Html$Events$targetValue = A2(
+	$elm$json$Json$Decode$at,
+	_List_fromArray(
+		['target', 'value']),
+	$elm$json$Json$Decode$string);
+var $elm$html$Html$Events$onInput = function (tagger) {
+	return A2(
+		$elm$html$Html$Events$stopPropagationOn,
+		'input',
+		A2(
+			$elm$json$Json$Decode$map,
+			$elm$html$Html$Events$alwaysStop,
+			A2($elm$json$Json$Decode$map, tagger, $elm$html$Html$Events$targetValue)));
+};
 var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
 var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
-var $author$project$Main$labeledTextBox = F3(
-	function (labelStr, placeStr, inputName) {
+var $author$project$Main$labeledTextBox = F4(
+	function (labelStr, placeStr, inputName, inputHandler) {
 		return A2(
 			$elm$html$Html$label,
 			_List_Nil,
@@ -6577,31 +6732,12 @@ var $author$project$Main$labeledTextBox = F3(
 						[
 							$elm$html$Html$Attributes$type_('text'),
 							$elm$html$Html$Attributes$name(inputName),
+							$elm$html$Html$Events$onInput(inputHandler),
 							$elm$html$Html$Attributes$placeholder(placeStr)
 						]),
 					_List_Nil)
 				]));
 	});
-var $author$project$Main$linkForm = function (_v0) {
-	return A2(
-		$elm$html$Html$div,
-		_List_Nil,
-		_List_fromArray(
-			[
-				A2(
-				$author$project$Main$createForm,
-				$author$project$Main$SubmitLink,
-				A2(
-					$elm$html$Html$div,
-					_List_Nil,
-					_List_fromArray(
-						[
-							A3($author$project$Main$labeledTextBox, 'Name: ', 'Potato', ''),
-							A3($author$project$Main$labeledTextBox, 'URL: ', 'https://....', ''),
-							A3($author$project$Main$labeledTextBox, 'Icon: ', 'https://....', '')
-						])))
-			]));
-};
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
 };
@@ -6612,11 +6748,107 @@ var $elm$html$Html$Events$on = F2(
 			event,
 			$elm$virtual_dom$VirtualDom$Normal(decoder));
 	});
+var $elm$html$Html$Events$targetChecked = A2(
+	$elm$json$Json$Decode$at,
+	_List_fromArray(
+		['target', 'checked']),
+	$elm$json$Json$Decode$bool);
+var $elm$html$Html$Events$onCheck = function (tagger) {
+	return A2(
+		$elm$html$Html$Events$on,
+		'change',
+		A2($elm$json$Json$Decode$map, tagger, $elm$html$Html$Events$targetChecked));
+};
+var $author$project$Main$linkForm = function (newlink) {
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				$author$project$Main$createForm,
+				$author$project$Main$SubmitLink,
+				A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('form-content')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$div,
+							_List_Nil,
+							_List_fromArray(
+								[
+									A4(
+									$author$project$Main$labeledTextBox,
+									'Name: ',
+									'Potato',
+									'name',
+									function (v) {
+										return $author$project$Main$GotNewLink(
+											_Utils_update(
+												newlink,
+												{name: v}));
+									}),
+									A4(
+									$author$project$Main$labeledTextBox,
+									'URL: ',
+									'https://....',
+									'url',
+									function (v) {
+										return $author$project$Main$GotNewLink(
+											_Utils_update(
+												newlink,
+												{url: v}));
+									}),
+									A4(
+									$author$project$Main$labeledTextBox,
+									'Icon: ',
+									'https://....',
+									'logo_url',
+									function (v) {
+										return $author$project$Main$GotNewLink(
+											_Utils_update(
+												newlink,
+												{logo_url: v}));
+									}),
+									A2(
+									$elm$html$Html$label,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$elm$html$Html$text('Shared: '),
+											A2(
+											$elm$html$Html$input,
+											_List_fromArray(
+												[
+													$elm$html$Html$Attributes$type_('checkbox'),
+													$elm$html$Html$Attributes$name('linkshared'),
+													$elm$html$Html$Events$onCheck(
+													function (v) {
+														return $author$project$Main$GotNewLink(
+															_Utils_update(
+																newlink,
+																{shared: v}));
+													}),
+													$elm$html$Html$Attributes$checked(newlink.shared)
+												]),
+											_List_Nil)
+										]))
+								]))
+						])))
+			]));
+};
 var $elm$html$Html$Events$onClick = function (msg) {
 	return A2(
 		$elm$html$Html$Events$on,
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
+};
+var $author$project$Main$DeleteLink = function (a) {
+	return {$: 'DeleteLink', a: a};
 };
 var $elm$html$Html$Attributes$href = function (url) {
 	return A2(
@@ -6625,6 +6857,7 @@ var $elm$html$Html$Attributes$href = function (url) {
 		_VirtualDom_noJavaScriptUri(url));
 };
 var $elm$html$Html$img = _VirtualDom_node('img');
+var $elm$html$Html$span = _VirtualDom_node('span');
 var $elm$html$Html$Attributes$src = function (url) {
 	return A2(
 		$elm$html$Html$Attributes$stringProperty,
@@ -6639,9 +6872,23 @@ var $author$project$Main$viewLink = function (link) {
 			[
 				A2(
 				$elm$html$Html$div,
-				_List_Nil,
 				_List_fromArray(
 					[
+						$elm$html$Html$Attributes$class('icon')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$span,
+						_List_fromArray(
+							[
+								$elm$html$Html$Events$onClick(
+								$author$project$Main$DeleteLink(link.id))
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('×')
+							])),
 						A2(
 						$elm$html$Html$a,
 						_List_fromArray(
@@ -6652,10 +6899,7 @@ var $author$project$Main$viewLink = function (link) {
 							[
 								A2(
 								$elm$html$Html$div,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$class('icon')
-									]),
+								_List_Nil,
 								_List_fromArray(
 									[
 										A2(
@@ -6685,7 +6929,7 @@ var $author$project$Main$viewLinks = function (model) {
 			[
 				A2(
 				$author$project$Main$bar,
-				$author$project$Main$linkForm(model),
+				$author$project$Main$linkForm(model.newlink),
 				A2(
 					$elm$html$Html$a,
 					_List_fromArray(
@@ -6720,7 +6964,6 @@ var $author$project$Main$HideWatchedItem = F2(
 		return {$: 'HideWatchedItem', a: a, b: b};
 	});
 var $elm$html$Html$li = _VirtualDom_node('li');
-var $elm$html$Html$span = _VirtualDom_node('span');
 var $author$project$Main$displayResult = function (node) {
 	return A2(
 		$elm$html$Html$li,
@@ -6792,8 +7035,11 @@ var $author$project$Main$viewWatch = function (watch) {
 				]));
 	}
 };
+var $author$project$Main$GotNewWatch = function (a) {
+	return {$: 'GotNewWatch', a: a};
+};
 var $author$project$Main$SubmitWatch = {$: 'SubmitWatch'};
-var $author$project$Main$watchForm = function (_v0) {
+var $author$project$Main$watchForm = function (newwatch) {
 	return A2(
 		$elm$html$Html$div,
 		_List_Nil,
@@ -6807,8 +7053,28 @@ var $author$project$Main$watchForm = function (_v0) {
 					_List_Nil,
 					_List_fromArray(
 						[
-							A3($author$project$Main$labeledTextBox, 'Item: ', 'some string...', ''),
-							A3($author$project$Main$labeledTextBox, 'Repository: ', 'NixOS/nixpkgs', '')
+							A4(
+							$author$project$Main$labeledTextBox,
+							'Item: ',
+							'some string...',
+							'name',
+							function (v) {
+								return $author$project$Main$GotNewWatch(
+									_Utils_update(
+										newwatch,
+										{name: v}));
+							}),
+							A4(
+							$author$project$Main$labeledTextBox,
+							'Repository: ',
+							'NixOS/nixpkgs',
+							'repo',
+							function (v) {
+								return $author$project$Main$GotNewWatch(
+									_Utils_update(
+										newwatch,
+										{repo: v}));
+							})
 						])))
 			]));
 };
@@ -6820,7 +7086,7 @@ var $author$project$Main$viewWatches = function (model) {
 			[
 				A2(
 				$author$project$Main$bar,
-				$author$project$Main$watchForm(model),
+				$author$project$Main$watchForm(model.newwatch),
 				A2(
 					$elm$html$Html$a,
 					_List_fromArray(
@@ -6883,6 +7149,37 @@ var $author$project$Main$view = function (model) {
 									[
 										$author$project$Main$viewLinks(model)
 									]))
+							])),
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('grid')
+							]),
+						_List_fromArray(
+							[
+								function () {
+								var _v0 = model.status;
+								if (_v0.$ === 'Errored') {
+									var e = _v0.a;
+									return A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$classList(
+												_List_fromArray(
+													[
+														_Utils_Tuple2('error', true)
+													]))
+											]),
+										_List_fromArray(
+											[
+												$elm$html$Html$text(e)
+											]));
+								} else {
+									return $elm$html$Html$text('');
+								}
+							}()
 							]))
 					]))
 			]));
