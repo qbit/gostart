@@ -6328,15 +6328,6 @@ var $author$project$Main$deleteLink = function (linkId) {
 			url: '/links/' + $elm$core$String$fromInt(linkId)
 		});
 };
-var $elm$core$List$head = function (list) {
-	if (list.b) {
-		var x = list.a;
-		var xs = list.b;
-		return $elm$core$Maybe$Just(x);
-	} else {
-		return $elm$core$Maybe$Nothing;
-	}
-};
 var $author$project$Main$HidItem = function (a) {
 	return {$: 'HidItem', a: a};
 };
@@ -6464,14 +6455,7 @@ var $author$project$Main$update = F2(
 							_Utils_update(
 								model,
 								{
-									status: function () {
-										var _v2 = $elm$core$List$head(watches);
-										if (_v2.$ === 'Just') {
-											return $author$project$Main$LoadedWatches(watches);
-										} else {
-											return $author$project$Main$LoadedWatches(_List_Nil);
-										}
-									}(),
+									status: $author$project$Main$LoadedWatches(watches),
 									watches: watches
 								}),
 							$elm$core$Platform$Cmd$none);
@@ -6502,14 +6486,7 @@ var $author$project$Main$update = F2(
 								model,
 								{
 									links: links,
-									status: function () {
-										var _v4 = $elm$core$List$head(links);
-										if (_v4.$ === 'Just') {
-											return $author$project$Main$LoadedLinks(links);
-										} else {
-											return $author$project$Main$LoadedLinks(_List_Nil);
-										}
-									}()
+									status: $author$project$Main$LoadedLinks(links)
 								}),
 							$elm$core$Platform$Cmd$none);
 					} else {
@@ -6517,7 +6494,7 @@ var $author$project$Main$update = F2(
 							_Utils_update(
 								model,
 								{
-									status: $author$project$Main$Errored('No Watches found')
+									status: $author$project$Main$Errored('No Links found')
 								}),
 							$elm$core$Platform$Cmd$none);
 					}
