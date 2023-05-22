@@ -31,20 +31,20 @@ main =
 
 
 type Msg
-    = Reload
+    = AddedLink (Result Http.Error ())
+    | DeletedLink (Result Http.Error ())
+    | DeleteLink Int
+    | GotLinks (Result Http.Error (List Data.Link))
+    | GotNewLink NewLink
+    | GotNewWatch NewWatch
+    | GotWatches (Result Http.Error (List Data.Watch))
+    | HideWatchedItem Int String
+    | HidItem (Result Http.Error ())
+    | Reload
     | ReloadLinks
     | ReloadWatches
-    | GotWatches (Result Http.Error (List Data.Watch))
-    | GotLinks (Result Http.Error (List Data.Link))
-    | AddedLink (Result Http.Error ())
-    | DeletedLink (Result Http.Error ())
-    | HidItem (Result Http.Error ())
     | SubmitLink
-    | GotNewLink NewLink
     | SubmitWatch
-    | GotNewWatch NewWatch
-    | HideWatchedItem Int String
-    | DeleteLink Int
 
 
 type Status
@@ -202,7 +202,6 @@ update msg model =
             ( model, hideWatched itemId repo )
 
         SubmitWatch ->
-            -- TODO
             ( model, addWatch model )
 
         SubmitLink ->
@@ -228,13 +227,7 @@ update msg model =
                 _ :: _ ->
                     ( { model
                         | watches = watches
-                        , status =
-                            case List.head watches of
-                                Just _ ->
-                                    LoadedWatches watches
-
-                                Nothing ->
-                                    LoadedWatches []
+                        , status = LoadedWatches watches
                       }
                     , Cmd.none
                     )
@@ -248,18 +241,13 @@ update msg model =
                     ( { model
                         | links = links
                         , status =
-                            case List.head links of
-                                Just _ ->
-                                    LoadedLinks links
-
-                                Nothing ->
-                                    LoadedLinks []
+                            LoadedLinks links
                       }
                     , Cmd.none
                     )
 
                 [] ->
-                    ( { model | status = Errored "No Watches found" }, Cmd.none )
+                    ( { model | status = Errored "No Links found" }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
