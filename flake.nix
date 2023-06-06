@@ -1,7 +1,7 @@
 {
   description = "gostart: a tailscale aware start page";
 
-  inputs.nixpkgs.url = "nixpkgs/nixos-unstable";
+  inputs.nixpkgs.url = "nixpkgs/nixos-23.05";
 
   outputs = { self, nixpkgs }:
     let
@@ -19,11 +19,11 @@
         in {
           gostart = pkgs.buildGo120Module {
             pname = "gostart";
-            version = "v0.2.0";
+            version = "v0.2.1";
             src = ./.;
 
-            vendorSha256 =
-              "sha256-IgXMI0+7ZQef1D7N4ObXSoZBgHIvlYuAY2v3ZUc7Jlk=";
+            vendorHash =
+              "sha256-rpe66ZpKRtP+xYXbTCGmzYwjwHOsfSWi/BvsW7rr0OM=";
           };
         });
 
