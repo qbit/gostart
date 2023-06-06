@@ -6294,6 +6294,9 @@ var $author$project$Main$addLink = function (model) {
 			url: '/links'
 		});
 };
+var $author$project$Main$AddedWatch = function (a) {
+	return {$: 'AddedWatch', a: a};
+};
 var $author$project$Main$addWatch = function (model) {
 	var body = $elm$http$Http$jsonBody(
 		$elm$json$Json$Encode$object(
@@ -6309,7 +6312,7 @@ var $author$project$Main$addWatch = function (model) {
 	return $elm$http$Http$post(
 		{
 			body: body,
-			expect: $elm$http$Http$expectWhatever($author$project$Main$AddedLink),
+			expect: $elm$http$Http$expectWhatever($author$project$Main$AddedWatch),
 			url: '/watches'
 		});
 };
@@ -6375,6 +6378,22 @@ var $author$project$Main$update = F2(
 						model,
 						{newlink: newlink}),
 					$elm$core$Platform$Cmd$none);
+			case 'AddedWatch':
+				if (msg.a.$ === 'Err') {
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								status: $author$project$Main$Errored('Server error adding a watch!')
+							}),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{newwatch: $author$project$Main$initialModel.newwatch}),
+						$author$project$Main$getWatches);
+				}
 			case 'AddedLink':
 				if (msg.a.$ === 'Err') {
 					return _Utils_Tuple2(
@@ -6695,8 +6714,9 @@ var $elm$html$Html$Events$onInput = function (tagger) {
 };
 var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
 var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
-var $author$project$Main$labeledTextBox = F4(
-	function (labelStr, placeStr, inputName, inputHandler) {
+var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
+var $author$project$Main$labeledInput = F5(
+	function (labelStr, placeStr, inputName, inputValue, inputHandler) {
 		return A2(
 			$elm$html$Html$label,
 			_List_Nil,
@@ -6710,7 +6730,8 @@ var $author$project$Main$labeledTextBox = F4(
 							$elm$html$Html$Attributes$type_('text'),
 							$elm$html$Html$Attributes$name(inputName),
 							$elm$html$Html$Events$onInput(inputHandler),
-							$elm$html$Html$Attributes$placeholder(placeStr)
+							$elm$html$Html$Attributes$placeholder(placeStr),
+							$elm$html$Html$Attributes$value(inputValue)
 						]),
 					_List_Nil)
 				]));
@@ -6736,88 +6757,92 @@ var $elm$html$Html$Events$onCheck = function (tagger) {
 		'change',
 		A2($elm$json$Json$Decode$map, tagger, $elm$html$Html$Events$targetChecked));
 };
-var $author$project$Main$linkForm = function (newlink) {
-	return A2(
-		$elm$html$Html$div,
-		_List_Nil,
-		_List_fromArray(
-			[
-				A2(
-				$author$project$Main$createForm,
-				$author$project$Main$SubmitLink,
-				A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							$elm$html$Html$Attributes$class('form-content')
-						]),
-					_List_fromArray(
-						[
-							A2(
-							$elm$html$Html$div,
-							_List_Nil,
-							_List_fromArray(
-								[
-									A4(
-									$author$project$Main$labeledTextBox,
-									'Name: ',
-									'Potato',
-									'name',
-									function (v) {
-										return $author$project$Main$GotNewLink(
-											_Utils_update(
-												newlink,
-												{name: v}));
-									}),
-									A4(
-									$author$project$Main$labeledTextBox,
-									'URL: ',
-									'https://....',
-									'url',
-									function (v) {
-										return $author$project$Main$GotNewLink(
-											_Utils_update(
-												newlink,
-												{url: v}));
-									}),
-									A4(
-									$author$project$Main$labeledTextBox,
-									'Icon: ',
-									'https://....',
-									'logo_url',
-									function (v) {
-										return $author$project$Main$GotNewLink(
-											_Utils_update(
-												newlink,
-												{logo_url: v}));
-									}),
-									A2(
-									$elm$html$Html$label,
-									_List_Nil,
-									_List_fromArray(
-										[
-											$elm$html$Html$text('Shared: '),
-											A2(
-											$elm$html$Html$input,
-											_List_fromArray(
-												[
-													$elm$html$Html$Attributes$type_('checkbox'),
-													$elm$html$Html$Attributes$name('linkshared'),
-													$elm$html$Html$Events$onCheck(
-													function (v) {
-														return $author$project$Main$GotNewLink(
-															_Utils_update(
-																newlink,
-																{shared: v}));
-													}),
-													$elm$html$Html$Attributes$checked(newlink.shared)
-												]),
-											_List_Nil)
-										]))
-								]))
-						])))
-			]));
-};
+var $author$project$Main$linkForm = F2(
+	function (model, newlink) {
+		return A2(
+			$elm$html$Html$div,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A2(
+					$author$project$Main$createForm,
+					$author$project$Main$SubmitLink,
+					A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('form-content')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$div,
+								_List_Nil,
+								_List_fromArray(
+									[
+										A5(
+										$author$project$Main$labeledInput,
+										'Name: ',
+										'Potato',
+										'name',
+										model.newlink.name,
+										function (v) {
+											return $author$project$Main$GotNewLink(
+												_Utils_update(
+													newlink,
+													{name: v}));
+										}),
+										A5(
+										$author$project$Main$labeledInput,
+										'URL: ',
+										'https://....',
+										'url',
+										model.newlink.url,
+										function (v) {
+											return $author$project$Main$GotNewLink(
+												_Utils_update(
+													newlink,
+													{url: v}));
+										}),
+										A5(
+										$author$project$Main$labeledInput,
+										'Icon: ',
+										'https://....',
+										'logo_url',
+										model.newlink.logo_url,
+										function (v) {
+											return $author$project$Main$GotNewLink(
+												_Utils_update(
+													newlink,
+													{logo_url: v}));
+										}),
+										A2(
+										$elm$html$Html$label,
+										_List_Nil,
+										_List_fromArray(
+											[
+												$elm$html$Html$text('Shared: '),
+												A2(
+												$elm$html$Html$input,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$type_('checkbox'),
+														$elm$html$Html$Attributes$name('linkshared'),
+														$elm$html$Html$Events$onCheck(
+														function (v) {
+															return $author$project$Main$GotNewLink(
+																_Utils_update(
+																	newlink,
+																	{shared: v}));
+														}),
+														$elm$html$Html$Attributes$checked(newlink.shared)
+													]),
+												_List_Nil)
+											]))
+									]))
+							])))
+				]));
+	});
 var $elm$html$Html$Events$onClick = function (msg) {
 	return A2(
 		$elm$html$Html$Events$on,
@@ -6907,7 +6932,7 @@ var $author$project$Main$viewLinks = function (model) {
 			[
 				A2(
 				$author$project$Main$bar,
-				$author$project$Main$linkForm(model.newlink),
+				A2($author$project$Main$linkForm, model, model.newlink),
 				A2(
 					$elm$html$Html$a,
 					_List_fromArray(
@@ -7017,45 +7042,48 @@ var $author$project$Main$GotNewWatch = function (a) {
 	return {$: 'GotNewWatch', a: a};
 };
 var $author$project$Main$SubmitWatch = {$: 'SubmitWatch'};
-var $author$project$Main$watchForm = function (newwatch) {
-	return A2(
-		$elm$html$Html$div,
-		_List_Nil,
-		_List_fromArray(
-			[
-				A2(
-				$author$project$Main$createForm,
-				$author$project$Main$SubmitWatch,
-				A2(
-					$elm$html$Html$div,
-					_List_Nil,
-					_List_fromArray(
-						[
-							A4(
-							$author$project$Main$labeledTextBox,
-							'Item: ',
-							'some string...',
-							'name',
-							function (v) {
-								return $author$project$Main$GotNewWatch(
-									_Utils_update(
-										newwatch,
-										{name: v}));
-							}),
-							A4(
-							$author$project$Main$labeledTextBox,
-							'Repository: ',
-							'NixOS/nixpkgs',
-							'repo',
-							function (v) {
-								return $author$project$Main$GotNewWatch(
-									_Utils_update(
-										newwatch,
-										{repo: v}));
-							})
-						])))
-			]));
-};
+var $author$project$Main$watchForm = F2(
+	function (model, newwatch) {
+		return A2(
+			$elm$html$Html$div,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A2(
+					$author$project$Main$createForm,
+					$author$project$Main$SubmitWatch,
+					A2(
+						$elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								A5(
+								$author$project$Main$labeledInput,
+								'Item: ',
+								'some string...',
+								'name',
+								model.newwatch.name,
+								function (v) {
+									return $author$project$Main$GotNewWatch(
+										_Utils_update(
+											newwatch,
+											{name: v}));
+								}),
+								A5(
+								$author$project$Main$labeledInput,
+								'Repository: ',
+								'NixOS/nixpkgs',
+								'repo',
+								model.newwatch.repo,
+								function (v) {
+									return $author$project$Main$GotNewWatch(
+										_Utils_update(
+											newwatch,
+											{repo: v}));
+								})
+							])))
+				]));
+	});
 var $author$project$Main$viewWatches = function (model) {
 	return A2(
 		$elm$html$Html$div,
@@ -7064,7 +7092,7 @@ var $author$project$Main$viewWatches = function (model) {
 			[
 				A2(
 				$author$project$Main$bar,
-				$author$project$Main$watchForm(model.newwatch),
+				A2($author$project$Main$watchForm, model, model.newwatch),
 				A2(
 					$elm$html$Html$a,
 					_List_fromArray(

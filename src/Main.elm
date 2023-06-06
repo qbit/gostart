@@ -3,7 +3,7 @@ module Main exposing (..)
 import Browser
 import Data
 import Html exposing (..)
-import Html.Attributes exposing (checked, class, classList, href, name, placeholder, src, type_)
+import Html.Attributes exposing (checked, class, classList, href, name, placeholder, src, type_, value)
 import Html.Events exposing (..)
 import Http
 import Json.Decode as Decode
@@ -32,6 +32,7 @@ main =
 
 type Msg
     = AddedLink (Result Http.Error ())
+    | AddedWatch (Result Http.Error ())
     | DeletedLink (Result Http.Error ())
     | DeleteLink Int
     | GotLinks (Result Http.Error (List Data.Link))
@@ -151,7 +152,7 @@ addWatch model =
     Http.post
         { url = "/watches"
         , body = body
-        , expect = Http.expectWhatever AddedLink
+        , expect = Http.expectWhatever AddedWatch
         }
 
 
@@ -179,6 +180,12 @@ update msg model =
 
         GotNewLink newlink ->
             ( { model | newlink = newlink }, Cmd.none )
+
+        AddedWatch (Err _) ->
+            ( { model | status = Errored "Server error adding a watch!" }, Cmd.none )
+
+        AddedWatch (Ok _) ->
+            ( { model | newwatch = initialModel.newwatch }, getWatches )
 
         AddedLink (Err _) ->
             ( { model | status = Errored "Server error adding a link!" }, Cmd.none )
@@ -353,29 +360,29 @@ repoInfoDecoder =
         (field "nameWithOwner" string)
 
 
-watchForm : NewWatch -> Html Msg
-watchForm newwatch =
+watchForm : Model -> NewWatch -> Html Msg
+watchForm model newwatch =
     div []
         [ createForm SubmitWatch
             (div
                 []
-                [ labeledTextBox "Item: " "some string..." "name" (\v -> GotNewWatch { newwatch | name = v })
-                , labeledTextBox "Repository: " "NixOS/nixpkgs" "repo" (\v -> GotNewWatch { newwatch | repo = v })
+                [ labeledInput "Item: " "some string..." "name" model.newwatch.name (\v -> GotNewWatch { newwatch | name = v })
+                , labeledInput "Repository: " "NixOS/nixpkgs" "repo" model.newwatch.repo (\v -> GotNewWatch { newwatch | repo = v })
                 ]
             )
         ]
 
 
-linkForm : NewLink -> Html Msg
-linkForm newlink =
+linkForm : Model -> NewLink -> Html Msg
+linkForm model newlink =
     div []
         [ createForm SubmitLink
             (div [ class "form-content" ]
                 [ div
                     []
-                    [ labeledTextBox "Name: " "Potato" "name" (\v -> GotNewLink { newlink | name = v })
-                    , labeledTextBox "URL: " "https://...." "url" (\v -> GotNewLink { newlink | url = v })
-                    , labeledTextBox "Icon: " "https://...." "logo_url" (\v -> GotNewLink { newlink | logo_url = v })
+                    [ labeledInput "Name: " "Potato" "name" model.newlink.name (\v -> GotNewLink { newlink | name = v })
+                    , labeledInput "URL: " "https://...." "url" model.newlink.url (\v -> GotNewLink { newlink | url = v })
+                    , labeledInput "Icon: " "https://...." "logo_url" model.newlink.logo_url (\v -> GotNewLink { newlink | logo_url = v })
                     , label []
                         [ text "Shared: "
                         , input
@@ -392,8 +399,8 @@ linkForm newlink =
         ]
 
 
-labeledTextBox : String -> String -> String -> (String -> msg) -> Html msg
-labeledTextBox labelStr placeStr inputName inputHandler =
+labeledInput : String -> String -> String -> String -> (String -> msg) -> Html msg
+labeledInput labelStr placeStr inputName inputValue inputHandler =
     label []
         [ text labelStr
         , input
@@ -401,6 +408,7 @@ labeledTextBox labelStr placeStr inputName inputHandler =
             , name inputName
             , onInput inputHandler
             , placeholder placeStr
+            , value inputValue
             ]
             []
         ]
@@ -435,7 +443,7 @@ bar left right =
 viewLinks : Model -> Html Msg
 viewLinks model =
     div []
-        [ bar (linkForm model.newlink) (a [ onClick ReloadLinks ] [ text " ⟳" ])
+        [ bar (linkForm model model.newlink) (a [ onClick ReloadLinks ] [ text " ⟳" ])
         , case model.links of
             _ :: _ ->
                 div
@@ -450,7 +458,7 @@ viewLinks model =
 viewWatches : Model -> Html Msg
 viewWatches model =
     div []
-        [ bar (watchForm model.newwatch) (a [ onClick ReloadWatches ] [ text " ⟳" ])
+        [ bar (watchForm model model.newwatch) (a [ onClick ReloadWatches ] [ text " ⟳" ])
         , case model.watches of
             _ :: _ ->
                 ul [] (List.map viewWatch model.watches)
