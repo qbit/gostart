@@ -21,6 +21,7 @@ import (
 	"suah.dev/gostart/data"
 	"tailscale.com/client/tailscale"
 	"tailscale.com/tsnet"
+	"tailscale.com/types/logger"
 )
 
 //go:embed schema.sql
@@ -70,6 +71,10 @@ func main() {
 	app.queries = data.New(db)
 	app.tsServer = &tsnet.Server{
 		Hostname: *name,
+	}
+
+	if *dev {
+		app.tsServer.Logf = logger.Discard
 	}
 	app.tsLocalClient, err = app.tsServer.LocalClient()
 	if err != nil {
