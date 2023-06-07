@@ -19,7 +19,7 @@
         in {
           gostart = pkgs.buildGo120Module {
             pname = "gostart";
-            version = "v0.2.1";
+            version = "v0.2.2";
             src = ./.;
 
             vendorHash =
