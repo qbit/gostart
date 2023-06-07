@@ -115,6 +115,9 @@ func (w WatchResults) GetLimits() *RateLimit {
 }
 
 func UpdateWatches(ghToken string) (*WatchResults, error) {
+	if ghToken == "" {
+		return nil, fmt.Errorf("invalid github token")
+	}
 	ctx := context.Background()
 	w := WatchResults{}
 

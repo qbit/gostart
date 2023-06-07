@@ -113,6 +113,20 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(OwnerCtx)
 
+	ghToken := os.Getenv("GH_AUTH_TOKEN")
+
+	if *tokenFile != "" && ghToken == "" {
+		tfBytes, err := os.ReadFile(*tokenFile)
+		if err != nil {
+			log.Fatal("can't read token file: ", err)
+		}
+		ghToken = string(tfBytes)
+	}
+
+	if ghToken == "" {
+		log.Fatal("can't operate without GH_AUTH_TOKEN")
+	}
+
 	var liveServer http.Handler
 	if *dev {
 		liveServer = http.FileServer(http.Dir("./assets"))
@@ -148,16 +162,6 @@ func main() {
 		r.Use(IconCacher)
 		r.Get("/{linkID:[0-9]+}", iconGET)
 	})
-
-	ghToken := os.Getenv("GH_AUTH_TOKEN")
-
-	if *tokenFile != "" && ghToken == "" {
-		tfBytes, err := os.ReadFile(*tokenFile)
-		if err != nil {
-			log.Fatal("can't read token file: ", err)
-		}
-		ghToken = string(tfBytes)
-	}
 
 	go func() {
 		for {
