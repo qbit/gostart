@@ -20,7 +20,8 @@ type alias Link =
 
 
 type alias Watch =
-    { ownerId : Int
+    { id : Int
+    , ownerId : Int
     , name : String
     , repo : String
     , resultCount : Int

@@ -35,6 +35,8 @@ type Msg
     | AddedWatch (Result Http.Error ())
     | DeletedLink (Result Http.Error ())
     | DeleteLink Int
+    | DeletedWatch (Result Http.Error ())
+    | DeleteWatch Int
     | GotLinks (Result Http.Error (List Data.Link))
     | GotNewLink NewLink
     | GotNewWatch NewWatch
@@ -169,11 +171,27 @@ deleteLink linkId =
         }
 
 
+deleteWatch : Int -> Cmd Msg
+deleteWatch watchId =
+    Http.request
+        { url = "/watches/" ++ String.fromInt watchId
+        , method = "DELETE"
+        , timeout = Nothing
+        , tracker = Nothing
+        , headers = []
+        , body = Http.emptyBody
+        , expect = Http.expectWhatever DeletedWatch
+        }
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         DeleteLink linkId ->
             ( model, deleteLink linkId )
+
+        DeleteWatch watchId ->
+            ( model, deleteWatch watchId )
 
         GotNewWatch newwatch ->
             ( { model | newwatch = newwatch }, Cmd.none )
@@ -198,6 +216,12 @@ update msg model =
 
         DeletedLink (Err _) ->
             ( { model | status = Errored "Server error deleting link!" }, Cmd.none )
+
+        DeletedWatch (Ok _) ->
+            ( model, getWatches )
+
+        DeletedWatch (Err _) ->
+            ( { model | status = Errored "Server error deleting watch!" }, Cmd.none )
 
         HidItem (Err _) ->
             ( { model | status = Errored "Server error when hiding a watch item!" }, Cmd.none )
@@ -336,7 +360,8 @@ linkDecoder =
 
 watchDecoder : Decoder Data.Watch
 watchDecoder =
-    map5 Data.Watch
+    map6 Data.Watch
+        (field "id" int)
         (field "owner_id" int)
         (field "name" string)
         (field "repo" string)
@@ -501,6 +526,7 @@ viewWatch watch =
                             [ text watch.repo
                             , text " -> "
                             , text watch.name
+                            , span [ onClick (DeleteWatch watch.id) ] [ text " ×" ]
                             ]
                         , ul [] (List.map displayResult watch.results)
                         ]

@@ -6153,15 +6153,15 @@ var $author$project$Main$getLinks = $elm$http$Http$get(
 var $author$project$Main$GotWatches = function (a) {
 	return {$: 'GotWatches', a: a};
 };
-var $author$project$Data$Watch = F5(
-	function (ownerId, name, repo, resultCount, results) {
-		return {name: name, ownerId: ownerId, repo: repo, resultCount: resultCount, results: results};
+var $author$project$Data$Watch = F6(
+	function (id, ownerId, name, repo, resultCount, results) {
+		return {id: id, name: name, ownerId: ownerId, repo: repo, resultCount: resultCount, results: results};
 	});
-var $elm$json$Json$Decode$map5 = _Json_map5;
 var $author$project$Data$Node = F5(
 	function (number, createdAt, repository, title, url) {
 		return {createdAt: createdAt, number: number, repository: repository, title: title, url: url};
 	});
+var $elm$json$Json$Decode$map5 = _Json_map5;
 var $author$project$Data$RepoInfo = function (nameWithOwner) {
 	return {nameWithOwner: nameWithOwner};
 };
@@ -6177,9 +6177,10 @@ var $author$project$Main$resultsDecoder = A6(
 	A2($elm$json$Json$Decode$field, 'repository', $author$project$Main$repoInfoDecoder),
 	A2($elm$json$Json$Decode$field, 'title', $elm$json$Json$Decode$string),
 	A2($elm$json$Json$Decode$field, 'url', $elm$json$Json$Decode$string));
-var $author$project$Main$watchDecoder = A6(
-	$elm$json$Json$Decode$map5,
+var $author$project$Main$watchDecoder = A7(
+	$elm$json$Json$Decode$map6,
 	$author$project$Data$Watch,
+	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$int),
 	A2($elm$json$Json$Decode$field, 'owner_id', $elm$json$Json$Decode$int),
 	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string),
 	A2($elm$json$Json$Decode$field, 'repo', $elm$json$Json$Decode$string),
@@ -6331,6 +6332,21 @@ var $author$project$Main$deleteLink = function (linkId) {
 			url: '/links/' + $elm$core$String$fromInt(linkId)
 		});
 };
+var $author$project$Main$DeletedWatch = function (a) {
+	return {$: 'DeletedWatch', a: a};
+};
+var $author$project$Main$deleteWatch = function (watchId) {
+	return $elm$http$Http$request(
+		{
+			body: $elm$http$Http$emptyBody,
+			expect: $elm$http$Http$expectWhatever($author$project$Main$DeletedWatch),
+			headers: _List_Nil,
+			method: 'DELETE',
+			timeout: $elm$core$Maybe$Nothing,
+			tracker: $elm$core$Maybe$Nothing,
+			url: '/watches/' + $elm$core$String$fromInt(watchId)
+		});
+};
 var $author$project$Main$HidItem = function (a) {
 	return {$: 'HidItem', a: a};
 };
@@ -6364,6 +6380,11 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					model,
 					$author$project$Main$deleteLink(linkId));
+			case 'DeleteWatch':
+				var watchId = msg.a;
+				return _Utils_Tuple2(
+					model,
+					$author$project$Main$deleteWatch(watchId));
 			case 'GotNewWatch':
 				var newwatch = msg.a;
 				return _Utils_Tuple2(
@@ -6419,6 +6440,18 @@ var $author$project$Main$update = F2(
 							model,
 							{
 								status: $author$project$Main$Errored('Server error deleting link!')
+							}),
+						$elm$core$Platform$Cmd$none);
+				}
+			case 'DeletedWatch':
+				if (msg.a.$ === 'Ok') {
+					return _Utils_Tuple2(model, $author$project$Main$getWatches);
+				} else {
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								status: $author$project$Main$Errored('Server error deleting watch!')
 							}),
 						$elm$core$Platform$Cmd$none);
 				}
@@ -6961,6 +6994,9 @@ var $author$project$Main$viewLinks = function (model) {
 };
 var $author$project$Main$ReloadWatches = {$: 'ReloadWatches'};
 var $elm$html$Html$ul = _VirtualDom_node('ul');
+var $author$project$Main$DeleteWatch = function (a) {
+	return {$: 'DeleteWatch', a: a};
+};
 var $elm$html$Html$b = _VirtualDom_node('b');
 var $author$project$Main$HideWatchedItem = F2(
 	function (a, b) {
@@ -7027,7 +7063,18 @@ var $author$project$Main$viewWatch = function (watch) {
 										[
 											$elm$html$Html$text(watch.repo),
 											$elm$html$Html$text(' -> '),
-											$elm$html$Html$text(watch.name)
+											$elm$html$Html$text(watch.name),
+											A2(
+											$elm$html$Html$span,
+											_List_fromArray(
+												[
+													$elm$html$Html$Events$onClick(
+													$author$project$Main$DeleteWatch(watch.id))
+												]),
+											_List_fromArray(
+												[
+													$elm$html$Html$text(' ×')
+												]))
 										])),
 									A2(
 									$elm$html$Html$ul,
