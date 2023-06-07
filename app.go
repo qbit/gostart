@@ -41,3 +41,13 @@ func (a *App) getOwner(r *http.Request) (*tailcfg.Node, error) {
 
 	return who.Node, nil
 }
+
+func (a *App) removeWatch(id int) {
+	newWatches := WatchResults{}
+	for _, w := range *a.watches {
+		if w.ID != int64(id) {
+			newWatches = append(newWatches, w)
+		}
+	}
+	a.watches = &newWatches
+}

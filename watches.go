@@ -133,6 +133,7 @@ func UpdateWatches(ghToken string) (*WatchResults, error) {
 		wr.OwnerID = watch.OwnerID
 		wr.Name = watch.Name
 		wr.Repo = watch.Repo
+		wr.ID = watch.ID
 		for _, dr := range wr.Data.Search.Edges {
 			wr.Results = append(wr.Results, dr.Node)
 		}
@@ -150,6 +151,7 @@ func UpdateWatches(ghToken string) (*WatchResults, error) {
 }
 
 type WatchResult struct {
+	ID          int64  `json:"id"`
 	Data        Data   `json:"data"`
 	OwnerID     int64  `json:"owner_id"`
 	Name        string `json:"name"`
