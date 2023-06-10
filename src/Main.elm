@@ -1,7 +1,6 @@
 module Main exposing (..)
 
 import Browser
-import Data
 import Html exposing (..)
 import Html.Attributes exposing (checked, class, classList, href, name, placeholder, src, type_, value)
 import Html.Events exposing (..)
@@ -18,6 +17,48 @@ import Json.Decode as Decode
         , string
         )
 import Json.Encode as Encode
+
+
+type alias Watches =
+    List Watch
+
+
+type alias Links =
+    List Link
+
+
+type alias Link =
+    { id : Int
+    , createdAt : String
+    , url : String
+    , name : String
+    , logoURL : String
+    , shared : Bool
+    }
+
+
+type alias Watch =
+    { id : Int
+    , ownerId : Int
+    , name : String
+    , repo : String
+    , resultCount : Int
+    , results : List Node
+    }
+
+
+type alias Node =
+    { number : Int
+    , createdAt : String
+    , repository : RepoInfo
+    , title : String
+    , url : String
+    }
+
+
+type alias RepoInfo =
+    { nameWithOwner : String
+    }
 
 
 main : Program () Model Msg
@@ -37,10 +78,10 @@ type Msg
     | DeleteLink Int
     | DeletedWatch (Result Http.Error ())
     | DeleteWatch Int
-    | GotLinks (Result Http.Error (List Data.Link))
+    | GotLinks (Result Http.Error (List Link))
     | GotNewLink NewLink
     | GotNewWatch NewWatch
-    | GotWatches (Result Http.Error (List Data.Watch))
+    | GotWatches (Result Http.Error (List Watch))
     | HideWatchedItem Int String
     | HidItem (Result Http.Error ())
     | Reload
@@ -52,8 +93,8 @@ type Msg
 
 type Status
     = Loading
-    | LoadedWatches (List Data.Watch)
-    | LoadedLinks (List Data.Link)
+    | LoadedWatches (List Watch)
+    | LoadedLinks (List Link)
     | Errored String
 
 
@@ -72,8 +113,8 @@ type alias NewLink =
 
 
 type alias Model =
-    { watches : List Data.Watch
-    , links : List Data.Link
+    { watches : List Watch
+    , links : List Link
     , errors : List String
     , status : Status
     , newlink : NewLink
@@ -337,19 +378,19 @@ getWatches =
         }
 
 
-linkListDecoder : Decoder (List Data.Link)
+linkListDecoder : Decoder (List Link)
 linkListDecoder =
     list linkDecoder
 
 
-watchListDecoder : Decoder (List Data.Watch)
+watchListDecoder : Decoder (List Watch)
 watchListDecoder =
     list watchDecoder
 
 
-linkDecoder : Decoder Data.Link
+linkDecoder : Decoder Link
 linkDecoder =
-    map6 Data.Link
+    map6 Link
         (field "id" int)
         (field "created_at" string)
         (field "url" string)
@@ -358,9 +399,9 @@ linkDecoder =
         (field "shared" bool)
 
 
-watchDecoder : Decoder Data.Watch
+watchDecoder : Decoder Watch
 watchDecoder =
-    map6 Data.Watch
+    map6 Watch
         (field "id" int)
         (field "owner_id" int)
         (field "name" string)
@@ -369,9 +410,9 @@ watchDecoder =
         (field "results" <| list resultsDecoder)
 
 
-resultsDecoder : Decoder Data.Node
+resultsDecoder : Decoder Node
 resultsDecoder =
-    map5 Data.Node
+    map5 Node
         (field "number" int)
         (field "createdAt" string)
         (field "repository" repoInfoDecoder)
@@ -379,9 +420,9 @@ resultsDecoder =
         (field "url" string)
 
 
-repoInfoDecoder : Decoder Data.RepoInfo
+repoInfoDecoder : Decoder RepoInfo
 repoInfoDecoder =
-    Decode.map Data.RepoInfo
+    Decode.map RepoInfo
         (field "nameWithOwner" string)
 
 
@@ -493,7 +534,7 @@ viewWatches model =
         ]
 
 
-viewLink : Data.Link -> Html Msg
+viewLink : Link -> Html Msg
 viewLink link =
     div []
         [ div [ class "icon" ]
@@ -511,7 +552,7 @@ viewLink link =
         ]
 
 
-viewWatch : Data.Watch -> Html Msg
+viewWatch : Watch -> Html Msg
 viewWatch watch =
     case watch.results of
         [] ->
@@ -534,7 +575,7 @@ viewWatch watch =
                 ]
 
 
-displayResult : Data.Node -> Html Msg
+displayResult : Node -> Html Msg
 displayResult node =
     li []
         [ a [ href node.url ] [ text (String.fromInt node.number) ]

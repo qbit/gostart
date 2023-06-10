@@ -6125,7 +6125,7 @@ var $elm$http$Http$get = function (r) {
 	return $elm$http$Http$request(
 		{body: $elm$http$Http$emptyBody, expect: r.expect, headers: _List_Nil, method: 'GET', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
 };
-var $author$project$Data$Link = F6(
+var $author$project$Main$Link = F6(
 	function (id, createdAt, url, name, logoURL, shared) {
 		return {createdAt: createdAt, id: id, logoURL: logoURL, name: name, shared: shared, url: url};
 	});
@@ -6136,7 +6136,7 @@ var $elm$json$Json$Decode$map6 = _Json_map6;
 var $elm$json$Json$Decode$string = _Json_decodeString;
 var $author$project$Main$linkDecoder = A7(
 	$elm$json$Json$Decode$map6,
-	$author$project$Data$Link,
+	$author$project$Main$Link,
 	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$int),
 	A2($elm$json$Json$Decode$field, 'created_at', $elm$json$Json$Decode$string),
 	A2($elm$json$Json$Decode$field, 'url', $elm$json$Json$Decode$string),
@@ -6153,25 +6153,25 @@ var $author$project$Main$getLinks = $elm$http$Http$get(
 var $author$project$Main$GotWatches = function (a) {
 	return {$: 'GotWatches', a: a};
 };
-var $author$project$Data$Watch = F6(
+var $author$project$Main$Watch = F6(
 	function (id, ownerId, name, repo, resultCount, results) {
 		return {id: id, name: name, ownerId: ownerId, repo: repo, resultCount: resultCount, results: results};
 	});
-var $author$project$Data$Node = F5(
+var $author$project$Main$Node = F5(
 	function (number, createdAt, repository, title, url) {
 		return {createdAt: createdAt, number: number, repository: repository, title: title, url: url};
 	});
 var $elm$json$Json$Decode$map5 = _Json_map5;
-var $author$project$Data$RepoInfo = function (nameWithOwner) {
+var $author$project$Main$RepoInfo = function (nameWithOwner) {
 	return {nameWithOwner: nameWithOwner};
 };
 var $author$project$Main$repoInfoDecoder = A2(
 	$elm$json$Json$Decode$map,
-	$author$project$Data$RepoInfo,
+	$author$project$Main$RepoInfo,
 	A2($elm$json$Json$Decode$field, 'nameWithOwner', $elm$json$Json$Decode$string));
 var $author$project$Main$resultsDecoder = A6(
 	$elm$json$Json$Decode$map5,
-	$author$project$Data$Node,
+	$author$project$Main$Node,
 	A2($elm$json$Json$Decode$field, 'number', $elm$json$Json$Decode$int),
 	A2($elm$json$Json$Decode$field, 'createdAt', $elm$json$Json$Decode$string),
 	A2($elm$json$Json$Decode$field, 'repository', $author$project$Main$repoInfoDecoder),
@@ -6179,7 +6179,7 @@ var $author$project$Main$resultsDecoder = A6(
 	A2($elm$json$Json$Decode$field, 'url', $elm$json$Json$Decode$string));
 var $author$project$Main$watchDecoder = A7(
 	$elm$json$Json$Decode$map6,
-	$author$project$Data$Watch,
+	$author$project$Main$Watch,
 	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$int),
 	A2($elm$json$Json$Decode$field, 'owner_id', $elm$json$Json$Decode$int),
 	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string),
