@@ -3,3 +3,4 @@ gostart
 .direnv
 *.db
 elm-stuff
+tags
