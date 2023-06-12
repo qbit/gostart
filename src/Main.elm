@@ -378,54 +378,6 @@ getWatches =
         }
 
 
-linkListDecoder : Decoder (List Link)
-linkListDecoder =
-    list linkDecoder
-
-
-watchListDecoder : Decoder (List Watch)
-watchListDecoder =
-    list watchDecoder
-
-
-linkDecoder : Decoder Link
-linkDecoder =
-    map6 Link
-        (field "id" int)
-        (field "created_at" string)
-        (field "url" string)
-        (field "name" string)
-        (field "logo_url" string)
-        (field "shared" bool)
-
-
-watchDecoder : Decoder Watch
-watchDecoder =
-    map6 Watch
-        (field "id" int)
-        (field "owner_id" int)
-        (field "name" string)
-        (field "repo" string)
-        (field "result_count" int)
-        (field "results" <| list resultsDecoder)
-
-
-resultsDecoder : Decoder Node
-resultsDecoder =
-    map5 Node
-        (field "number" int)
-        (field "createdAt" string)
-        (field "repository" repoInfoDecoder)
-        (field "title" string)
-        (field "url" string)
-
-
-repoInfoDecoder : Decoder RepoInfo
-repoInfoDecoder =
-    Decode.map RepoInfo
-        (field "nameWithOwner" string)
-
-
 watchForm : Model -> NewWatch -> Html Msg
 watchForm model newwatch =
     div []
@@ -498,8 +450,8 @@ createForm action content =
         ]
 
 
-bar : Html Msg -> Html Msg -> Html Msg
-bar left right =
+viewBar : Html Msg -> Html Msg -> Html Msg
+viewBar left right =
     header [ class "bar" ]
         [ div [ class "bar-left" ] [ left ]
         , div [ class "bar-right" ] [ right ]
@@ -509,7 +461,7 @@ bar left right =
 viewLinks : Model -> Html Msg
 viewLinks model =
     div []
-        [ bar (linkForm model model.newlink) (a [ onClick ReloadLinks ] [ text " ⟳" ])
+        [ viewBar (linkForm model model.newlink) (a [ onClick ReloadLinks ] [ text " ⟳" ])
         , case model.links of
             _ :: _ ->
                 div
@@ -524,7 +476,7 @@ viewLinks model =
 viewWatches : Model -> Html Msg
 viewWatches model =
     div []
-        [ bar (watchForm model model.newwatch) (a [ onClick ReloadWatches ] [ text " ⟳" ])
+        [ viewBar (watchForm model model.newwatch) (a [ onClick ReloadWatches ] [ text " ⟳" ])
         , case model.watches of
             _ :: _ ->
                 ul [] (List.map viewWatch model.watches)
@@ -569,14 +521,14 @@ viewWatch watch =
                             , text watch.name
                             , span [ onClick (DeleteWatch watch.id) ] [ text " ×" ]
                             ]
-                        , ul [] (List.map displayResult watch.results)
+                        , ul [] (List.map viewResult watch.results)
                         ]
                     ]
                 ]
 
 
-displayResult : Node -> Html Msg
-displayResult node =
+viewResult : Node -> Html Msg
+viewResult node =
     li []
         [ a [ href node.url ] [ text (String.fromInt node.number) ]
         , text " :: "
@@ -584,3 +536,55 @@ displayResult node =
         , text " :: "
         , text node.title
         ]
+
+
+
+-- DECODERS
+
+
+linkListDecoder : Decoder (List Link)
+linkListDecoder =
+    list linkDecoder
+
+
+linkDecoder : Decoder Link
+linkDecoder =
+    map6 Link
+        (field "id" int)
+        (field "created_at" string)
+        (field "url" string)
+        (field "name" string)
+        (field "logo_url" string)
+        (field "shared" bool)
+
+
+watchListDecoder : Decoder (List Watch)
+watchListDecoder =
+    list watchDecoder
+
+
+watchDecoder : Decoder Watch
+watchDecoder =
+    map6 Watch
+        (field "id" int)
+        (field "owner_id" int)
+        (field "name" string)
+        (field "repo" string)
+        (field "result_count" int)
+        (field "results" <| list resultsDecoder)
+
+
+resultsDecoder : Decoder Node
+resultsDecoder =
+    map5 Node
+        (field "number" int)
+        (field "createdAt" string)
+        (field "repository" repoInfoDecoder)
+        (field "title" string)
+        (field "url" string)
+
+
+repoInfoDecoder : Decoder RepoInfo
+repoInfoDecoder =
+    Decode.map RepoInfo
+        (field "nameWithOwner" string)
