@@ -47,6 +47,7 @@
               rlwrap
               sqlc
               sqlite
+              nodePackages.uglify-js
             ];
           };
         });
