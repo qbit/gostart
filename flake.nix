@@ -19,11 +19,11 @@
         in {
           gostart = pkgs.buildGo120Module {
             pname = "gostart";
-            version = "v0.2.3";
+            version = "v0.2.4";
             src = ./.;
 
             vendorHash =
-              "sha256-r8iVif6aPVGxwlrcTiqa91OGIOJ/7Ay5QpPvynxlSO8=";
+              "sha256-V8daJcDitpJIoEd9eURIyRPlpx4hoFvfsDI5c2GzWg0=";
           };
         });
 

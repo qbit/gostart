@@ -381,7 +381,8 @@ getWatches =
 watchForm : Model -> NewWatch -> Html Msg
 watchForm model newwatch =
     div []
-        [ createForm SubmitWatch
+        [ createForm "Watches"
+            SubmitWatch
             (div
                 []
                 [ labeledInput "Item: " "some string..." "name" model.newwatch.name (\v -> GotNewWatch { newwatch | name = v })
@@ -394,7 +395,8 @@ watchForm model newwatch =
 linkForm : Model -> NewLink -> Html Msg
 linkForm model newlink =
     div []
-        [ createForm SubmitLink
+        [ createForm "Links"
+            SubmitLink
             (div [ class "form-content" ]
                 [ div
                     []
@@ -432,10 +434,10 @@ labeledInput labelStr placeStr inputName inputValue inputHandler =
         ]
 
 
-createForm : Msg -> Html Msg -> Html Msg
-createForm action content =
+createForm : String -> Msg -> Html Msg -> Html Msg
+createForm title action content =
     details []
-        [ summary [] [ text "" ]
+        [ summary [] [ b [] [ text title ] ]
         , Html.form
             [ onSubmit action
             , class "form-container"
