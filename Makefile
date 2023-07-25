@@ -16,7 +16,7 @@ build:
 	go build
 
 watch:
-	echo src/Main.elm | entr -r elm make src/Main.elm --output=assets/main.js
+	echo src/Main.elm | entr -r make elm
 
 run: sqlc build
-	./gostart -name startdev -db ./test.db
+	./gostart -name startdev -db ./test.db -dev
