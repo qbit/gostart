@@ -7,7 +7,6 @@ import (
 	"embed"
 	"flag"
 	"fmt"
-	"io"
 	"io/fs"
 	"log"
 	"net/http"
@@ -162,6 +161,14 @@ func main() {
 		r.Use(IconCacher)
 		r.Get("/{linkID:[0-9]+}", iconGET)
 	})
+	r.Route("/update-icons", func(r chi.Router) {
+		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			updateIcons()
+			w.Header().Add("Content-type", "application/json")
+			w.WriteHeader(200)
+			w.Write([]byte(`{"update": true}`))
+		})
+	})
 
 	go func() {
 		for {
@@ -182,45 +189,7 @@ func main() {
 	go func() {
 		if dbExists {
 			for {
-				links, err := app.queries.GetAllLinks(app.ctx)
-				if err != nil {
-					log.Println("can't get links: ", err)
-				}
-
-				for _, link := range links {
-					fmt.Println(link.LogoUrl)
-					if link.LogoUrl == "" {
-						continue
-					}
-					resp, err := http.Get(link.LogoUrl)
-					if err != nil {
-						log.Println(err)
-						continue
-					}
-
-					body, err := io.ReadAll(resp.Body)
-					if err != nil {
-						log.Println(err)
-						continue
-					}
-					err = resp.Body.Close()
-					if err != nil {
-						log.Println(err)
-						continue
-					}
-					contentType := resp.Header.Get("Content-Type")
-
-					err = app.queries.AddIcon(app.ctx, data.AddIconParams{
-						OwnerID:     link.OwnerID,
-						LinkID:      link.ID,
-						ContentType: contentType,
-						Data:        body,
-					})
-					if err != nil {
-						log.Println("can't add icon: ", err)
-
-					}
-				}
+				updateIcons()
 				time.Sleep(24 * time.Hour)
 			}
 		} else {

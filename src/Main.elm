@@ -89,6 +89,8 @@ type Msg
     | ReloadWatches
     | SubmitLink
     | SubmitWatch
+    | FetchIcons
+    | LoadIcons (Result Http.Error ())
 
 
 type Status
@@ -199,6 +201,14 @@ addWatch model =
         }
 
 
+fetchIcons : Cmd Msg
+fetchIcons =
+    Http.get
+        { url = "/update-icons"
+        , expect = Http.expectWhatever LoadIcons
+        }
+
+
 deleteLink : Int -> Cmd Msg
 deleteLink linkId =
     Http.request
@@ -228,6 +238,15 @@ deleteWatch watchId =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        LoadIcons (Ok _) ->
+            ( model, getLinks )
+
+        LoadIcons (Err _) ->
+            ( { model | status = Errored "Server error reloading icons!" }, Cmd.none )
+
+        FetchIcons ->
+            ( model, fetchIcons )
+
         DeleteLink linkId ->
             ( model, deleteLink linkId )
 
@@ -357,6 +376,13 @@ view model =
 
                     _ ->
                         text ""
+                ]
+            ]
+        , footer []
+            [ details []
+                [ summary []
+                    [ b [] [ text "Maintenence" ] ]
+                , button [ onClick FetchIcons ] [ text "Update Icons" ]
                 ]
             ]
         ]
