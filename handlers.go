@@ -245,12 +245,24 @@ func linksGET(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
 	}
+	owner, err := app.queries.GetOwner(ctx, ownerID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	links, err := app.queries.GetAllLinksForOwner(app.ctx, ownerID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	linksJson, err := json.Marshal(links)
+	filteredLinks := []data.Link{}
+	for _, l := range links {
+		if !owner.ShowShared && l.OwnerID != ownerID {
+			continue
+		}
+		filteredLinks = append(filteredLinks, l)
+	}
+	linksJson, err := json.Marshal(filteredLinks)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
