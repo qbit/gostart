@@ -1,7 +1,7 @@
 {
   description = "gostart: a tailscale aware start page";
 
-  inputs.nixpkgs.url = "nixpkgs/nixos-23.05";
+  inputs.nixpkgs.url = "nixpkgs";
 
   outputs = {
     self,
