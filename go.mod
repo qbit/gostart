@@ -7,7 +7,7 @@ require (
 	github.com/go-chi/render v1.0.3
 	golang.org/x/image v0.9.0
 	modernc.org/sqlite v1.24.0
-	tailscale.com v1.46.0
+	tailscale.com v1.46.1
 )
 
 require (

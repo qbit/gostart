@@ -300,5 +300,5 @@ modernc.org/z v1.7.3 h1:zDJf6iHjrnB+WRD88stbXokugjyc0/pB91ri1gO6LZY=
 nhooyr.io/websocket v1.8.7 h1:usjR2uOr/zjjkVMy0lW+PPohFok7PCow5sDjLgX4P4g=
 nhooyr.io/websocket v1.8.7/go.mod h1:B70DZP8IakI65RVQ51MsWP/8jndNma26DVA/nFSCgW0=
 software.sslmate.com/src/go-pkcs12 v0.2.0 h1:nlFkj7bTysH6VkC4fGphtjXRbezREPgrHuJG20hBGPE=
-tailscale.com v1.46.0 h1:WDDEu60WW3fyaBSieSBCoXXwaDOiX6fHluuc1XK5vzw=
-tailscale.com v1.46.0/go.mod h1:ibLiUQopXCzj65xktDlL9/fdhRbyHc1jVamRS0gbsZk=
+tailscale.com v1.46.1 h1:6gd+GDs6dJSRISTk6DsGMSMUSZQEJ36D+21MU5bg1oI=
+tailscale.com v1.46.1/go.mod h1:ibLiUQopXCzj65xktDlL9/fdhRbyHc1jVamRS0gbsZk=
