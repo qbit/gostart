@@ -1,7 +1,7 @@
 GOSRC!=find * -type f \( -name '*.go' -and -not -name '*_test.go' \)
 GOSRC+=go.mod go.sum
 
-gostart: $(GO_SRC) go.mod go.sum data
+gostart: $(GO_SRC) go.mod go.sum data assets/main.min.js
 	go build -trimpath -o $@
 
 assets/main.min.js: src/Main.elm
