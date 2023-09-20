@@ -1,7 +1,7 @@
 {
   description = "gostart: a tailscale aware start page";
 
-  inputs.nixpkgs.url = "nixpkgs";
+  inputs.nixpkgs.url = "github:nixos/nixpkgs";
 
   outputs = {
     self,
@@ -20,10 +20,10 @@
     in {
       gostart = pkgs.buildGo120Module {
         pname = "gostart";
-        version = "v0.2.7";
+        version = "v0.2.8";
         src = ./.;
 
-        vendorHash = "sha256-gbyrsxO6sQQ3rJ4DkbuNn9xKLlfWIeeDrchHyvHARbM=";
+        vendorHash = "sha256-SaX+enmEyUxwyfAD5+03TZ/YN7MYmwaDitpo2jo46fU=";
       };
     });
 
@@ -42,7 +42,7 @@
           entr
           git
           go-tools
-          go_1_20
+          go_1_21
           gopls
           rlwrap
           sqlc
