@@ -20,7 +20,7 @@ check:
 
 .PHONY: watch
 watch:
-	echo src/Main.elm | entr -r make elm
+	echo src/Main.elm | entr -r make assets/main.min.js
 
 .PHONY: run
 run: gostart
