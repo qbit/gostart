@@ -18,7 +18,7 @@
     packages = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
     in {
-      gostart = pkgs.buildGo120Module {
+      gostart = pkgs.buildGo121Module {
         pname = "gostart";
         version = "v0.2.8";
         src = ./.;
