@@ -30,7 +30,7 @@ in {
       };
 
       keyPath = mkOption {
-        type = types.path;
+        type = with types; oneOf [path str];
         default = "";
         description = ''
           Path to the GitHub API key file
@@ -74,8 +74,9 @@ in {
         User = cfg.user;
         Group = cfg.group;
 
-        ExecStart =
-          "${cfg.package}/bin/gostart -auth ${cfg.keyPath} -db ${cfg.dataDir}/gostart.db";
+        ExecStart = ''
+          ${cfg.package}/bin/gostart ${lib.optionalString (cfg.keyPath != "") "-auth ${cfg.keyPath}"} -db ${cfg.dataDir}/gostart.db
+        '';
       };
     };
   };
