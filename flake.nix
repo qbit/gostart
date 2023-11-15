@@ -20,10 +20,10 @@
     in {
       gostart = pkgs.buildGo121Module {
         pname = "gostart";
-        version = "v0.2.9";
+        version = "v0.2.11";
         src = ./.;
 
-        vendorHash = "sha256-SaX+enmEyUxwyfAD5+03TZ/YN7MYmwaDitpo2jo46fU=";
+        vendorHash = "sha256-NxJW9x8QOSeBi5SuegZSll292j4UBJoph8YC69PibGc=";
       };
     });
 
@@ -35,10 +35,11 @@
         shellHook = ''
           PS1='\u@\h:\@; '
           nix run github:qbit/xin#flake-warn
-          echo "Go `${pkgs.go}/bin/go version`"
+          echo "Go `${pkgs.go_1_21}/bin/go version`"
         '';
         nativeBuildInputs = with pkgs; [
           elmPackages.elm
+          elmPackages.elm-json
           entr
           git
           go-tools
