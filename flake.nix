@@ -18,12 +18,12 @@
     packages = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
     in {
-      gostart = pkgs.buildGo121Module {
+      gostart = pkgs.buildGoModule {
         pname = "gostart";
-        version = "v0.2.12";
+        version = "v0.2.13";
         src = ./.;
 
-        vendorHash = "sha256-E6MaIzAVNz0zS5rtN1LdE32U54BJXNzt6s8p8efNryo=";
+        vendorHash = "sha256-XPNQhwGRKjW/qiI/k+hEwVGJlpLRd6wvhGUORuRwHl8=";
       };
     });
 
@@ -35,7 +35,7 @@
         shellHook = ''
           PS1='\u@\h:\@; '
           nix run github:qbit/xin#flake-warn
-          echo "Go `${pkgs.go_1_21}/bin/go version`"
+          echo "Go `${pkgs.go}/bin/go version`"
         '';
         nativeBuildInputs = with pkgs; [
           elmPackages.elm
@@ -43,7 +43,7 @@
           entr
           git
           go-tools
-          go_1_21
+          go
           gopls
           rlwrap
           sqlc
