@@ -299,6 +299,50 @@ func linksPOST(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func prignoreGET(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	ownerID, ok := ctx.Value(ownerKey).(int64)
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		return
+	}
+	prIgnores, err := app.queries.GetAllPullRequestIgnores(app.ctx, ownerID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	prJson, err := json.Marshal(prIgnores)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-type", "application/json")
+	w.WriteHeader(200)
+	_, err = w.Write(prJson)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func prignoreDELETE(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	ownerID, ok := ctx.Value(ownerKey).(int64)
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		return
+	}
+	ignoreID, err := strconv.Atoi(chi.URLParam(r, "ignoreID"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	err = app.queries.DeleteIgnore(app.ctx, data.DeleteIgnoreParams{ID: int64(ignoreID), OwnerID: ownerID})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
 func prignorePOST(w http.ResponseWriter, r *http.Request) {
 	d := &data.AddPullRequestIgnoreParams{}
 	if err := render.Decode(r, d); err != nil {

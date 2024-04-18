@@ -71,7 +71,7 @@
 
       .form-container {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
+          grid-template-columns: repeat(4, 1fr);
       }
 
       .form-content {
@@ -79,6 +79,26 @@
 
       .error {
           color: red;
+      }
+
+      table {
+          border: 1px solid #dedeff;
+      }
+
+      table tr td {
+          padding: 5px;
+      }
+
+      table th {
+          background-color: #dedeff;
+      }
+
+      table tr:nth-child(even) {
+          background-color: #f6f8f9;
+      }
+
+      table tr:nth-child(odd) {
+          background-color: #fff;
       }
 
       header {
@@ -94,7 +114,6 @@
       }
 
       footer {
-          text-align: center;
       }
   </style>
 </head>

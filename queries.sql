@@ -82,6 +82,13 @@ from pull_requests
 where id = ?
   and owner_id = ?;
 
+-- name: DeleteIgnore :exec
+delete
+from pull_request_ignores
+where id = ?
+  and owner_id = ?;
+
+
 -- name: GetAllPullRequestIgnores :many
 select *
 from pull_request_ignores

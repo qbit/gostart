@@ -175,6 +175,23 @@ func (q *Queries) AddWatchItem(ctx context.Context, arg AddWatchItemParams) (Wat
 	return i, err
 }
 
+const deleteIgnore = `-- name: DeleteIgnore :exec
+delete
+from pull_request_ignores
+where id = ?
+  and owner_id = ?
+`
+
+type DeleteIgnoreParams struct {
+	ID      int64 `json:"id"`
+	OwnerID int64 `json:"owner_id"`
+}
+
+func (q *Queries) DeleteIgnore(ctx context.Context, arg DeleteIgnoreParams) error {
+	_, err := q.db.ExecContext(ctx, deleteIgnore, arg.ID, arg.OwnerID)
+	return err
+}
+
 const deleteLink = `-- name: DeleteLink :exec
 delete
 from links

@@ -156,6 +156,8 @@ func main() {
 	r.Route("/prignores", func(r chi.Router) {
 		r.Use(render.SetContentType(render.ContentTypeJSON))
 		r.Post("/", prignorePOST)
+		r.Get("/", prignoreGET)
+		r.Delete("/{ignoreID:[0-9]+}", prignoreDELETE)
 	})
 	r.Route("/icons", func(r chi.Router) {
 		r.Use(IconCacher)

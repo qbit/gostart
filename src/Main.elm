@@ -2,63 +2,25 @@ module Main exposing (..)
 
 import Browser
 import Html exposing (..)
-import Html.Attributes exposing (checked, class, classList, href, name, placeholder, src, type_, value)
+import Html.Attributes
+    exposing
+        ( checked
+        , class
+        , classList
+        , href
+        , name
+        , placeholder
+        , src
+        , type_
+        , value
+        )
 import Html.Events exposing (..)
 import Http
-import Json.Decode as Decode
-    exposing
-        ( Decoder
-        , bool
-        , field
-        , int
-        , list
-        , map5
-        , map6
-        , string
-        )
+import Ignores
 import Json.Encode as Encode
-
-
-type alias Watches =
-    List Watch
-
-
-type alias Links =
-    List Link
-
-
-type alias Link =
-    { id : Int
-    , createdAt : String
-    , url : String
-    , name : String
-    , logoURL : String
-    , shared : Bool
-    }
-
-
-type alias Watch =
-    { id : Int
-    , ownerId : Int
-    , name : String
-    , repo : String
-    , resultCount : Int
-    , results : List Node
-    }
-
-
-type alias Node =
-    { number : Int
-    , createdAt : String
-    , repository : RepoInfo
-    , title : String
-    , url : String
-    }
-
-
-type alias RepoInfo =
-    { nameWithOwner : String
-    }
+import Links
+import Table exposing (defaultCustomizations)
+import Watches
 
 
 main : Program () Model Msg
@@ -78,49 +40,47 @@ type Msg
     | DeleteLink Int
     | DeletedWatch (Result Http.Error ())
     | DeleteWatch Int
-    | GotLinks (Result Http.Error (List Link))
-    | GotNewLink NewLink
-    | GotNewWatch NewWatch
-    | GotWatches (Result Http.Error (List Watch))
+    | DeletedIgnore (Result Http.Error ())
+    | DeleteIgnore Int
+    | GotLinks (Result Http.Error Links.Links)
+    | GotNewLink Links.NewLink
+    | GotNewWatch Watches.NewWatch
+    | GotWatches (Result Http.Error Watches.Watches)
+    | GotIgnores (Result Http.Error Ignores.Ignores)
     | HideWatchedItem Int String
     | HidItem (Result Http.Error ())
     | Reload
     | ReloadLinks
     | ReloadWatches
+    | ReloadIgnores
     | SubmitLink
     | SubmitWatch
     | FetchIcons
     | LoadIcons (Result Http.Error ())
+    | SetLinkTableState Table.State
+    | SetWatchTableState Table.State
+    | SetIgnoreTableState Table.State
 
 
 type Status
     = Loading
-    | LoadedWatches (List Watch)
-    | LoadedLinks (List Link)
+    | LoadedWatches Watches.Watches
+    | LoadedIgnores Ignores.Ignores
+    | LoadedLinks Links.Links
     | Errored String
 
 
-type alias NewWatch =
-    { name : String
-    , repo : String
-    }
-
-
-type alias NewLink =
-    { name : String
-    , url : String
-    , shared : Bool
-    , logo_url : String
-    }
-
-
 type alias Model =
-    { watches : List Watch
-    , links : List Link
+    { watches : Watches.Watches
+    , links : Links.Links
+    , ignores : Ignores.Ignores
     , errors : List String
     , status : Status
-    , newlink : NewLink
-    , newwatch : NewWatch
+    , newlink : Links.NewLink
+    , newwatch : Watches.NewWatch
+    , linkTableState : Table.State
+    , watchTableState : Table.State
+    , ignoreTableState : Table.State
     }
 
 
@@ -128,6 +88,7 @@ initialModel : Model
 initialModel =
     { watches = []
     , links = []
+    , ignores = []
     , errors = []
     , status = Loading
     , newlink =
@@ -140,12 +101,15 @@ initialModel =
         { name = ""
         , repo = ""
         }
+    , linkTableState = Table.initialSort "Created"
+    , watchTableState = Table.initialSort "Created"
+    , ignoreTableState = Table.initialSort "Created"
     }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( initialModel, Cmd.batch [ getLinks, getWatches ] )
+    ( initialModel, Cmd.batch [ getLinks, getWatches, getIgnores ] )
 
 
 hideWatched : Int -> String -> Cmd Msg
@@ -222,6 +186,19 @@ deleteLink linkId =
         }
 
 
+deleteIgnore : Int -> Cmd Msg
+deleteIgnore ignoreId =
+    Http.request
+        { url = "/prignores/" ++ String.fromInt ignoreId
+        , method = "DELETE"
+        , timeout = Nothing
+        , tracker = Nothing
+        , headers = []
+        , body = Http.emptyBody
+        , expect = Http.expectWhatever DeletedIgnore
+        }
+
+
 deleteWatch : Int -> Cmd Msg
 deleteWatch watchId =
     Http.request
@@ -253,6 +230,9 @@ update msg model =
         DeleteWatch watchId ->
             ( model, deleteWatch watchId )
 
+        DeleteIgnore ignoreId ->
+            ( model, deleteIgnore ignoreId )
+
         GotNewWatch newwatch ->
             ( { model | newwatch = newwatch }, Cmd.none )
 
@@ -283,6 +263,12 @@ update msg model =
         DeletedWatch (Err _) ->
             ( { model | status = Errored "Server error deleting watch!" }, Cmd.none )
 
+        DeletedIgnore (Ok _) ->
+            ( model, getIgnores )
+
+        DeletedIgnore (Err _) ->
+            ( { model | status = Errored "Server error deleting ignore!" }, Cmd.none )
+
         HidItem (Err _) ->
             ( { model | status = Errored "Server error when hiding a watch item!" }, Cmd.none )
 
@@ -307,11 +293,17 @@ update msg model =
         ReloadLinks ->
             ( model, getLinks )
 
+        ReloadIgnores ->
+            ( model, getIgnores )
+
         GotWatches (Err _) ->
             ( { model | status = Errored "Server error when fetching watches!" }, Cmd.none )
 
         GotLinks (Err _) ->
             ( { model | status = Errored "Server error when fetching links!" }, Cmd.none )
+
+        GotIgnores (Err _) ->
+            ( { model | status = Errored "Server error when fetching ignores!" }, Cmd.none )
 
         GotWatches (Ok watches) ->
             case watches of
@@ -339,6 +331,28 @@ update msg model =
 
                 [] ->
                     ( { model | status = Errored "No Links found" }, Cmd.none )
+
+        GotIgnores (Ok ignores) ->
+            case ignores of
+                _ :: _ ->
+                    ( { model
+                        | ignores = ignores
+                        , status = LoadedIgnores ignores
+                      }
+                    , Cmd.none
+                    )
+
+                [] ->
+                    ( { model | status = Errored "No Watches found" }, Cmd.none )
+
+        SetLinkTableState newState ->
+            ( { model | linkTableState = newState }, Cmd.none )
+
+        SetWatchTableState newState ->
+            ( { model | watchTableState = newState }, Cmd.none )
+
+        SetIgnoreTableState newState ->
+            ( { model | ignoreTableState = newState }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -381,18 +395,181 @@ view model =
         , footer []
             [ details []
                 [ summary []
-                    [ b [] [ text "Maintenence" ] ]
-                , button [ onClick FetchIcons ] [ text "Update Icons" ]
+                    [ b [] [ text "Maintenence" ]
+                    ]
+                , div []
+                    [ button [ onClick FetchIcons ] [ text "Update Icons" ]
+                    ]
+                , div []
+                    [ h3 [] [ text "Links" ]
+                    , Table.view linkTableConfig model.linkTableState model.links
+                    ]
+                , div []
+                    [ h3 [] [ text "Watched Items" ]
+                    , Table.view watchTableConfig model.watchTableState model.watches
+                    ]
+                , div []
+                    [ h3
+                        []
+                        [ text "Watched Items Ignores" ]
+                    , Table.view ignoreTableConfig model.ignoreTableState model.ignores
+                    ]
                 ]
             ]
         ]
+
+
+shareTxt : Links.Link -> Table.HtmlDetails Msg
+shareTxt link =
+    if link.shared then
+        Table.HtmlDetails []
+            [ text "Yes" ]
+
+    else
+        Table.HtmlDetails []
+            [ text "No" ]
+
+
+shareColumn : Table.Column Links.Link Msg
+shareColumn =
+    Table.veryCustomColumn
+        { name = "Shared"
+        , viewData = \data -> shareTxt data
+        , sorter = Table.unsortable
+        }
+
+
+linkTimeColumn : Table.Column Links.Link Msg
+linkTimeColumn =
+    Table.customColumn
+        { name = "Created"
+        , viewData = .createdAt
+        , sorter = Table.decreasingOrIncreasingBy .createdAt
+        }
+
+
+deleteLinkColumn : Table.Column Links.Link Msg
+deleteLinkColumn =
+    Table.veryCustomColumn
+        { name = "Action"
+        , viewData = linkDeleteView
+        , sorter = Table.unsortable
+        }
+
+
+linkTableConfig : Table.Config Links.Link Msg
+linkTableConfig =
+    Table.customConfig
+        { toId = .name
+        , toMsg = SetLinkTableState
+        , columns =
+            [ Table.stringColumn "Name" .name
+            , Table.stringColumn "URL" .url
+            , shareColumn
+            , Table.stringColumn "Logo URL" .logoURL
+            , linkTimeColumn
+            , deleteLinkColumn
+            ]
+        , customizations = defaultCustomizations
+        }
+
+
+linkDeleteView : Links.Link -> Table.HtmlDetails Msg
+linkDeleteView { id } =
+    Table.HtmlDetails []
+        [ button
+            [ onClick (DeleteLink id) ]
+            [ text "Delete" ]
+        ]
+
+
+watchTableConfig : Table.Config Watches.Watch Msg
+watchTableConfig =
+    Table.config
+        { toId = .name
+        , toMsg = SetWatchTableState
+        , columns =
+            [ Table.stringColumn "Name" .name
+            , Table.stringColumn "Repo" .repo
+            , deleteWatchColumn
+            ]
+        }
+
+
+deleteWatchColumn : Table.Column Watches.Watch Msg
+deleteWatchColumn =
+    Table.veryCustomColumn
+        { name = "Action"
+        , viewData = watchDeleteView
+        , sorter = Table.unsortable
+        }
+
+
+watchDeleteView : Watches.Watch -> Table.HtmlDetails Msg
+watchDeleteView { id } =
+    Table.HtmlDetails []
+        [ button
+            [ onClick (DeleteWatch id) ]
+            [ text "Delete" ]
+        ]
+
+
+ignoreTimeColumn : Table.Column Ignores.Ignore Msg
+ignoreTimeColumn =
+    Table.customColumn
+        { name = "Created"
+        , viewData = .createdAt
+        , sorter = Table.decreasingOrIncreasingBy .createdAt
+        }
+
+
+deleteIgnoreColumn : Table.Column Ignores.Ignore Msg
+deleteIgnoreColumn =
+    Table.veryCustomColumn
+        { name = "Action"
+        , viewData = ignoreDeleteView
+        , sorter = Table.unsortable
+        }
+
+
+ignoreDeleteView : Ignores.Ignore -> Table.HtmlDetails Msg
+ignoreDeleteView { id } =
+    Table.HtmlDetails []
+        [ button
+            [ onClick (DeleteIgnore id) ]
+            [ text "Delete" ]
+        ]
+
+
+ignoreTableConfig : Table.Config Ignores.Ignore Msg
+ignoreTableConfig =
+    Table.customConfig
+        { toId = .createdAt
+        , toMsg = SetIgnoreTableState
+        , columns =
+            [ Table.intColumn "ID" .id
+            , Table.stringColumn "Repo" .repo
+            , Table.intColumn "Number" .number
+            , ignoreTimeColumn
+            , deleteIgnoreColumn
+            ]
+        , customizations = defaultCustomizations
+        }
+
+
+getIgnores : Cmd Msg
+getIgnores =
+    Http.get
+        { url = "/prignores"
+        , expect = Http.expectJson GotIgnores Ignores.ignoreListDecoder
+        }
 
 
 getLinks : Cmd Msg
 getLinks =
     Http.get
         { url = "/links"
-        , expect = Http.expectJson GotLinks linkListDecoder
+        , expect = Http.expectJson GotLinks Links.linkListDecoder
         }
 
 
@@ -400,11 +577,11 @@ getWatches : Cmd Msg
 getWatches =
     Http.get
         { url = "/watches"
-        , expect = Http.expectJson GotWatches watchListDecoder
+        , expect = Http.expectJson GotWatches Watches.watchListDecoder
         }
 
 
-watchForm : Model -> NewWatch -> Html Msg
+watchForm : Model -> Watches.NewWatch -> Html Msg
 watchForm model newwatch =
     div []
         [ createForm "Watches"
@@ -418,7 +595,7 @@ watchForm model newwatch =
         ]
 
 
-linkForm : Model -> NewLink -> Html Msg
+linkForm : Model -> Links.NewLink -> Html Msg
 linkForm model newlink =
     div []
         [ createForm "Links"
@@ -514,7 +691,7 @@ viewWatches model =
         ]
 
 
-viewLink : Link -> Html Msg
+viewLink : Links.Link -> Html Msg
 viewLink link =
     div []
         [ div [ class "icon" ]
@@ -532,7 +709,7 @@ viewLink link =
         ]
 
 
-viewWatch : Watch -> Html Msg
+viewWatch : Watches.Watch -> Html Msg
 viewWatch watch =
     case watch.results of
         [] ->
@@ -555,7 +732,7 @@ viewWatch watch =
                 ]
 
 
-viewResult : Node -> Html Msg
+viewResult : Watches.Node -> Html Msg
 viewResult node =
     li []
         [ a [ href node.url ] [ text (String.fromInt node.number) ]
@@ -564,55 +741,3 @@ viewResult node =
         , text " :: "
         , text node.title
         ]
-
-
-
--- DECODERS
-
-
-linkListDecoder : Decoder (List Link)
-linkListDecoder =
-    list linkDecoder
-
-
-linkDecoder : Decoder Link
-linkDecoder =
-    map6 Link
-        (field "id" int)
-        (field "created_at" string)
-        (field "url" string)
-        (field "name" string)
-        (field "logo_url" string)
-        (field "shared" bool)
-
-
-watchListDecoder : Decoder (List Watch)
-watchListDecoder =
-    list watchDecoder
-
-
-watchDecoder : Decoder Watch
-watchDecoder =
-    map6 Watch
-        (field "id" int)
-        (field "owner_id" int)
-        (field "name" string)
-        (field "repo" string)
-        (field "result_count" int)
-        (field "results" <| list resultsDecoder)
-
-
-resultsDecoder : Decoder Node
-resultsDecoder =
-    map5 Node
-        (field "number" int)
-        (field "createdAt" string)
-        (field "repository" repoInfoDecoder)
-        (field "title" string)
-        (field "url" string)
-
-
-repoInfoDecoder : Decoder RepoInfo
-repoInfoDecoder =
-    Decode.map RepoInfo
-        (field "nameWithOwner" string)
