@@ -107,10 +107,10 @@ func main() {
 		}
 	}()
 
-	r := chi.NewRouter()
+	router := chi.NewRouter()
 
-	r.Use(middleware.Logger)
-	r.Use(OwnerCtx)
+	router.Use(middleware.Logger)
+	router.Use(OwnerCtx)
 
 	ghToken := os.Getenv("GH_AUTH_TOKEN")
 
@@ -134,36 +134,36 @@ func main() {
 		liveServer = http.FileServer(http.FS(embFS))
 	}
 
-	r.Mount("/", liveServer)
-	r.Route("/pullrequests", func(r chi.Router) {
+	router.Mount("/", liveServer)
+	router.Route("/pullrequests", func(r chi.Router) {
 		r.Use(render.SetContentType(render.ContentTypeJSON))
 		r.Get("/", pullrequestsGET)
 		r.Delete("/{prID:[0-9]+}", pullrequestsDELETE)
 		r.Post("/", pullrequestsPOST)
 	})
-	r.Route("/links", func(r chi.Router) {
+	router.Route("/links", func(r chi.Router) {
 		r.Use(render.SetContentType(render.ContentTypeJSON))
 		r.Get("/", linksGET)
 		r.Delete("/{linkID:[0-9]+}", linkDELETE)
 		r.Post("/", linksPOST)
 	})
-	r.Route("/watches", func(r chi.Router) {
+	router.Route("/watches", func(r chi.Router) {
 		r.Use(render.SetContentType(render.ContentTypeJSON))
 		r.Get("/", watchitemGET)
 		r.Delete("/{watchID:[0-9]+}", watchitemDELETE)
 		r.Post("/", watchitemPOST)
 	})
-	r.Route("/prignores", func(r chi.Router) {
+	router.Route("/prignores", func(r chi.Router) {
 		r.Use(render.SetContentType(render.ContentTypeJSON))
 		r.Post("/", prignorePOST)
 		r.Get("/", prignoreGET)
 		r.Delete("/{ignoreID:[0-9]+}", prignoreDELETE)
 	})
-	r.Route("/icons", func(r chi.Router) {
+	router.Route("/icons", func(r chi.Router) {
 		r.Use(IconCacher)
 		r.Get("/{linkID:[0-9]+}", iconGET)
 	})
-	r.Route("/update-icons", func(r chi.Router) {
+	router.Route("/update-icons", func(r chi.Router) {
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			updateIcons()
 			w.Header().Add("Content-type", "application/json")
@@ -200,7 +200,7 @@ func main() {
 	}()
 
 	hs := &http.Server{
-		Handler: r,
+		Handler: router,
 		TLSConfig: &tls.Config{
 			GetCertificate: app.tsLocalClient.GetCertificate,
 		},
