@@ -7,6 +7,7 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"log"
 	"net/http"
 	"strconv"
 	"unicode"
@@ -143,7 +144,7 @@ func watchitemDELETE(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	err = app.queries.DeleteWatchItem(app.ctx, data.DeleteWatchItemParams{ID: int64(watchID), OwnerID: ownerID})
+	err = app.queries.DeleteWatchItem(ctx, data.DeleteWatchItemParams{ID: int64(watchID), OwnerID: ownerID})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -165,7 +166,7 @@ func watchitemPOST(w http.ResponseWriter, r *http.Request) {
 
 	d.OwnerID = ownerID
 
-	_, err := app.queries.AddWatchItem(app.ctx, *d)
+	_, err := app.queries.AddWatchItem(ctx, *d)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		return
@@ -187,7 +188,7 @@ func pullrequestsPOST(w http.ResponseWriter, r *http.Request) {
 
 	d.OwnerID = ownerID
 
-	_, err := app.queries.AddPullRequest(app.ctx, *d)
+	_, err := app.queries.AddPullRequest(ctx, *d)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		return
@@ -205,7 +206,7 @@ func pullrequestsDELETE(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	err = app.queries.DeletePullRequest(app.ctx, data.DeletePullRequestParams{ID: int64(prID), OwnerID: ownerID})
+	err = app.queries.DeletePullRequest(ctx, data.DeletePullRequestParams{ID: int64(prID), OwnerID: ownerID})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -218,7 +219,7 @@ func pullrequestsGET(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
 	}
-	prs, err := app.queries.GetAllPullRequests(app.ctx, ownerID)
+	prs, err := app.queries.GetAllPullRequests(ctx, ownerID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -250,7 +251,7 @@ func linksGET(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	links, err := app.queries.GetAllLinksForOwner(app.ctx, ownerID)
+	links, err := app.queries.GetAllLinksForOwner(ctx, ownerID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -292,7 +293,7 @@ func linksPOST(w http.ResponseWriter, r *http.Request) {
 
 	d.OwnerID = ownerID
 
-	_, err := app.queries.AddLink(app.ctx, *d)
+	_, err := app.queries.AddLink(ctx, *d)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -306,13 +307,15 @@ func prignoreGET(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
 	}
-	prIgnores, err := app.queries.GetAllPullRequestIgnores(app.ctx, ownerID)
+	prIgnores, err := app.queries.GetAllPullRequestIgnores(ctx, ownerID)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	prJson, err := json.Marshal(prIgnores)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -321,6 +324,7 @@ func prignoreGET(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 	_, err = w.Write(prJson)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -337,7 +341,7 @@ func prignoreDELETE(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	err = app.queries.DeleteIgnore(app.ctx, data.DeleteIgnoreParams{ID: int64(ignoreID), OwnerID: ownerID})
+	err = app.queries.DeleteIgnore(ctx, data.DeleteIgnoreParams{ID: int64(ignoreID), OwnerID: ownerID})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -358,7 +362,7 @@ func prignorePOST(w http.ResponseWriter, r *http.Request) {
 
 	d.OwnerID = ownerID
 
-	_, err := app.queries.AddPullRequestIgnore(app.ctx, *d)
+	_, err := app.queries.AddPullRequestIgnore(ctx, *d)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -376,7 +380,7 @@ func linkDELETE(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	err = app.queries.DeleteLink(app.ctx, data.DeleteLinkParams{ID: int64(linkID), OwnerID: ownerID})
+	err = app.queries.DeleteLink(ctx, data.DeleteLinkParams{ID: int64(linkID), OwnerID: ownerID})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

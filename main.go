@@ -29,11 +29,10 @@ var (
 
 	//go:embed assets
 	assets         embed.FS
-	appCtx, cancel = context.WithTimeout(context.Background(), 3*time.Second)
+	appCtx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
 )
 
 var app = &App{
-	ctx:           appCtx,
 	tsServer:      &tsnet.Server{},
 	tsLocalClient: &tailscale.LocalClient{},
 }
@@ -63,7 +62,8 @@ func main() {
 	} else {
 		if _, err := os.Stat(*dbFile); os.IsNotExist(err) {
 			log.Println("Creating database..")
-			if _, err := db.ExecContext(app.ctx, schema); err != nil {
+			ctx := context.Background()
+			if _, err := db.ExecContext(ctx, schema); err != nil {
 				log.Fatal("can't create database schema: ", err)
 			}
 		}

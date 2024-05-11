@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -10,7 +11,8 @@ import (
 )
 
 func updateIcons() {
-	links, err := app.queries.GetAllLinks(app.ctx)
+	ctx := context.Background()
+	links, err := app.queries.GetAllLinks(ctx)
 	if err != nil {
 		log.Println("can't get links: ", err)
 	}
@@ -38,7 +40,7 @@ func updateIcons() {
 		}
 		contentType := resp.Header.Get("Content-Type")
 
-		err = app.queries.AddIcon(app.ctx, data.AddIconParams{
+		err = app.queries.AddIcon(ctx, data.AddIconParams{
 			OwnerID:     link.OwnerID,
 			LinkID:      link.ID,
 			ContentType: contentType,

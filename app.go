@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"log"
 	"net/http"
 
@@ -14,12 +13,12 @@ import (
 type App struct {
 	tsServer      *tsnet.Server
 	tsLocalClient *tailscale.LocalClient
-	ctx           context.Context
 	queries       *data.Queries
 	watches       *WatchResults
 }
 
 func (a *App) getOwner(r *http.Request) (*tailcfg.Node, error) {
+	ctx := r.Context()
 	who, err := a.tsLocalClient.WhoIs(r.Context(), r.RemoteAddr)
 	if err != nil {
 		return nil, err
@@ -27,9 +26,9 @@ func (a *App) getOwner(r *http.Request) (*tailcfg.Node, error) {
 
 	ownerID := int64(who.Node.ID)
 
-	ownerExists, err := a.queries.GetOwner(a.ctx, ownerID)
+	ownerExists, err := a.queries.GetOwner(ctx, ownerID)
 	if err != nil || ownerExists.ID != ownerID {
-		_, err = a.queries.AddOwner(a.ctx, data.AddOwnerParams{
+		_, err = a.queries.AddOwner(ctx, data.AddOwnerParams{
 			ID:         int64(who.Node.ID),
 			Name:       who.Node.ComputedName,
 			ShowShared: false,
