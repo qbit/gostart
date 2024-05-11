@@ -23,19 +23,23 @@ import (
 	"tailscale.com/types/logger"
 )
 
-//go:embed schema.sql
-var schema string
+var (
+	//go:embed schema.sql
+	schema string
 
-//go:embed assets
-var assets embed.FS
+	//go:embed assets
+	assets         embed.FS
+	appCtx, cancel = context.WithTimeout(context.Background(), 3*time.Second)
+)
 
 var app = &App{
-	ctx:           context.Background(),
+	ctx:           appCtx,
 	tsServer:      &tsnet.Server{},
 	tsLocalClient: &tailscale.LocalClient{},
 }
 
 func main() {
+	defer cancel()
 	name := flag.String("name", "startpage", "name of service")
 	key := flag.String("key", "", "path to file containing the api key")
 	watchInterval := flag.Int64("refresh", 5, "number of minutes between watch refresh")
