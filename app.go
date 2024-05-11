@@ -35,7 +35,7 @@ func (a *App) getOwner(r *http.Request) (*tailcfg.Node, error) {
 			ShowShared: false,
 		})
 		if err != nil {
-			log.Printf("adding owner failed (%#v): %s", ownerID, err)
+			log.Printf("adding owner failed (ownerID: %#v) (ownerExists: %#v): %s", ownerID, ownerExists, err)
 			return nil, err
 		}
 	}
