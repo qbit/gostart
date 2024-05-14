@@ -16,7 +16,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
-	_ "modernc.org/sqlite"
+	_ "github.com/mattn/go-sqlite3"
 	"suah.dev/gostart/data"
 	"tailscale.com/client/tailscale"
 	"tailscale.com/tsnet"
@@ -47,7 +47,7 @@ func main() {
 	dev := flag.Bool("dev", false, "develop mode, serve live files from ./assets")
 	flag.Parse()
 
-	db, err := sql.Open("sqlite", fmt.Sprintf("%s?cache=shared&mode=rwc", *dbFile))
+	db, err := sql.Open("sqlite3", fmt.Sprintf("%s?cache=shared&mode=rwc", *dbFile))
 	if err != nil {
 		log.Fatal("can't open database: ", err)
 	}
