@@ -709,9 +709,7 @@ viewLink link =
         [ div [ class "icon" ]
             [ span [ onClick (DeleteLink link.id) ] [ text "×" ]
             , a
-                [ onClick (IncrementLink link.id)
-
-                -- , href link.url
+                [ href link.url
                 ]
                 [ div
                     []
