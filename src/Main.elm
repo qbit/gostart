@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import Browser
+import Browser.Navigation exposing (load)
 import Html exposing (..)
 import Html.Attributes
     exposing
@@ -37,7 +38,9 @@ type Msg
     = AddedLink (Result Http.Error ())
     | AddedWatch (Result Http.Error ())
     | DeletedLink (Result Http.Error ())
+    | ClickedLink (Result Http.Error String)
     | DeleteLink Int
+    | IncrementLink Int
     | DeletedWatch (Result Http.Error ())
     | DeleteWatch Int
     | DeletedIgnore (Result Http.Error ())
@@ -186,6 +189,19 @@ deleteLink linkId =
         }
 
 
+incrementLink : Int -> Cmd Msg
+incrementLink linkId =
+    Http.request
+        { url = "/links/" ++ String.fromInt linkId
+        , method = "GET"
+        , timeout = Nothing
+        , tracker = Nothing
+        , headers = []
+        , body = Http.emptyBody
+        , expect = Http.expectString ClickedLink
+        }
+
+
 deleteIgnore : Int -> Cmd Msg
 deleteIgnore ignoreId =
     Http.request
@@ -227,6 +243,9 @@ update msg model =
         DeleteLink linkId ->
             ( model, deleteLink linkId )
 
+        IncrementLink linkId ->
+            ( model, incrementLink linkId )
+
         DeleteWatch watchId ->
             ( model, deleteWatch watchId )
 
@@ -250,6 +269,12 @@ update msg model =
 
         AddedLink (Ok _) ->
             ( { model | newlink = initialModel.newlink }, getLinks )
+
+        ClickedLink (Ok newUrl) ->
+            ( model, load newUrl )
+
+        ClickedLink (Err _) ->
+            ( { model | status = Errored "Server error incrementing link!" }, Cmd.none )
 
         DeletedLink (Ok _) ->
             ( model, getLinks )
@@ -678,6 +703,28 @@ viewLinks model =
         ]
 
 
+viewLink : Links.Link -> Html Msg
+viewLink link =
+    div []
+        [ div [ class "icon" ]
+            [ span [ onClick (DeleteLink link.id) ] [ text "×" ]
+            , a
+                [ onClick (IncrementLink link.id)
+
+                -- , href link.url
+                ]
+                [ div
+                    []
+                    [ header []
+                        [ img [ src ("/icons/" ++ String.fromInt link.id) ] []
+                        ]
+                    , text link.name
+                    ]
+                ]
+            ]
+        ]
+
+
 viewWatches : Model -> Html Msg
 viewWatches model =
     div []
@@ -688,24 +735,6 @@ viewWatches model =
 
             [] ->
                 text "No watches found!"
-        ]
-
-
-viewLink : Links.Link -> Html Msg
-viewLink link =
-    div []
-        [ div [ class "icon" ]
-            [ span [ onClick (DeleteLink link.id) ] [ text "×" ]
-            , a [ href link.url ]
-                [ div
-                    []
-                    [ header []
-                        [ img [ src ("/icons/" ++ String.fromInt link.id) ] []
-                        ]
-                    , text link.name
-                    ]
-                ]
-            ]
         ]
 
 

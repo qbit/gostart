@@ -30,7 +30,8 @@ where id = ?
 select *
 from links
 where owner_id = ?
-   or shared = true;
+   or shared = true
+   order by clicked desc;
 
 -- name: GetAllLinks :many
 select *
@@ -97,3 +98,9 @@ where owner_id = ?;
 -- name: AddPullRequestIgnore :one
 insert into pull_request_ignores (owner_id, number, repo)
 values (?, ?, ?) returning *;
+
+-- name: IncrementLink :one
+update links set
+clicked = clicked + 1
+where id = ?
+  and owner_id = ? returning *	;

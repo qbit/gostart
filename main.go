@@ -149,6 +149,7 @@ func main() {
 		r.Use(render.SetContentType(render.ContentTypeJSON))
 		r.Get("/", linksGET)
 		r.Delete("/{linkID:[0-9]+}", linkDELETE)
+		r.Get("/{linkID:[0-9]+}", linkGET)
 		r.Post("/", linksPOST)
 	})
 	router.Route("/watches", func(r chi.Router) {

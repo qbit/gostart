@@ -320,6 +320,7 @@ select id, owner_id, created_at, url, name, clicked, logo_url, shared
 from links
 where owner_id = ?
    or shared = true
+   order by clicked desc
 `
 
 func (q *Queries) GetAllLinksForOwner(ctx context.Context, ownerID int64) ([]Link, error) {
@@ -552,6 +553,34 @@ func (q *Queries) GetOwner(ctx context.Context, id int64) (Owner, error) {
 		&i.LastUsed,
 		&i.Name,
 		&i.ShowShared,
+	)
+	return i, err
+}
+
+const incrementLink = `-- name: IncrementLink :one
+update links set
+clicked = clicked + 1
+where id = ?
+  and owner_id = ? returning id, owner_id, created_at, url, name, clicked, logo_url, shared
+`
+
+type IncrementLinkParams struct {
+	ID      int64 `json:"id"`
+	OwnerID int64 `json:"owner_id"`
+}
+
+func (q *Queries) IncrementLink(ctx context.Context, arg IncrementLinkParams) (Link, error) {
+	row := q.db.QueryRowContext(ctx, incrementLink, arg.ID, arg.OwnerID)
+	var i Link
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.CreatedAt,
+		&i.Url,
+		&i.Name,
+		&i.Clicked,
+		&i.LogoUrl,
+		&i.Shared,
 	)
 	return i, err
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
@@ -384,4 +385,22 @@ func linkDELETE(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+func linkGET(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	ownerID, ok := ctx.Value(ownerKey).(int64)
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		return
+	}
+	linkID, err := strconv.Atoi(chi.URLParam(r, "linkID"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	link, err := app.queries.IncrementLink(ctx, data.IncrementLinkParams{ID: int64(linkID), OwnerID: ownerID})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	fmt.Fprintf(w, "%s", link.Url)
 }
