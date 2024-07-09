@@ -28,8 +28,7 @@ var (
 	schema string
 
 	//go:embed assets
-	assets         embed.FS
-	appCtx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
+	assets embed.FS
 )
 
 var app = &App{
@@ -38,7 +37,6 @@ var app = &App{
 }
 
 func main() {
-	defer cancel()
 	name := flag.String("name", "startpage", "name of service")
 	key := flag.String("key", "", "path to file containing the api key")
 	watchInterval := flag.Int64("refresh", 5, "number of minutes between watch refresh")
@@ -51,7 +49,6 @@ func main() {
 	if err != nil {
 		log.Fatal("can't open database: ", err)
 	}
-
 	dbExists := false
 	if *dbFile == ":memory:" {
 		err := tmpDBPopulate(db)
