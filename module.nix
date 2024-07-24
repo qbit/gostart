@@ -65,7 +65,10 @@ in {
     systemd.services.gostart = {
       enable = true;
       description = "gostart server";
-      wantedBy = [ "network-online.target" ];
+      wants =
+        [ "network-online.target" "multi-user.target" ];
+      before = [ "matrix-synapse.service" ];
+      wantedBy = [ "multi-user.target" ];
       after = [ "network-online.target" ];
 
       environment = { HOME = "${cfg.dataDir}"; };
