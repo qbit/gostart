@@ -2,14 +2,15 @@ package main
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"encoding/json"
-	"fmt"
 	"image"
 	"image/color"
 	"image/png"
 	"log"
 	"net/http"
+	"slices"
 	"strconv"
 	"unicode"
 
@@ -264,6 +265,11 @@ func linksGET(w http.ResponseWriter, r *http.Request) {
 		}
 		filteredLinks = append(filteredLinks, l)
 	}
+
+	slices.SortFunc(filteredLinks, func(a, b data.Link) int {
+		return cmp.Compare(b.Clicked, a.Clicked)
+	})
+
 	linksJson, err := json.Marshal(filteredLinks)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -402,5 +408,5 @@ func linkGET(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	fmt.Fprintf(w, "%s", link.Url)
+	http.Redirect(w, r, link.Url, http.StatusSeeOther)
 }

@@ -709,7 +709,7 @@ viewLink link =
         [ div [ class "icon" ]
             [ span [ onClick (DeleteLink link.id) ] [ text "×" ]
             , a
-                [ href link.url
+                [ href ("/links/" ++ String.fromInt link.id)
                 ]
                 [ div
                     []
