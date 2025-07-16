@@ -5,11 +5,11 @@ go 1.22.0
 toolchain go1.22.2
 
 require (
-	github.com/go-chi/chi/v5 v5.0.12
+	github.com/go-chi/chi/v5 v5.0.14
 	github.com/go-chi/render v1.0.3
-	github.com/mattn/go-sqlite3 v1.14.22
+	github.com/mattn/go-sqlite3 v1.14.28
 	golang.org/x/image v0.16.0
-	tailscale.com v1.66.1
+	tailscale.com v1.66.4
 )
 
 require (
