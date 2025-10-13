@@ -18,7 +18,7 @@ import (
 	"github.com/go-chi/render"
 	_ "github.com/mattn/go-sqlite3"
 	"suah.dev/gostart/data"
-	"tailscale.com/client/tailscale"
+	"tailscale.com/client/local"
 	"tailscale.com/tsnet"
 	"tailscale.com/types/logger"
 )
@@ -33,7 +33,7 @@ var (
 
 var app = &App{
 	tsServer:      &tsnet.Server{},
-	tsLocalClient: &tailscale.LocalClient{},
+	tsLocalClient: &local.Client{},
 }
 
 func main() {

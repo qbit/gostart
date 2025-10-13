@@ -58,13 +58,13 @@
               elmPackages.elm-json
               entr
               git
-              go-tools
               go
+              go-tools
               gopls
+              nodePackages.uglify-js
               rlwrap
               sqlc
               sqlite
-              nodePackages.uglify-js
             ];
           };
         }

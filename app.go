@@ -5,14 +5,14 @@ import (
 	"net/http"
 
 	"suah.dev/gostart/data"
-	"tailscale.com/client/tailscale"
+	"tailscale.com/client/local"
 	"tailscale.com/tailcfg"
 	"tailscale.com/tsnet"
 )
 
 type App struct {
 	tsServer      *tsnet.Server
-	tsLocalClient *tailscale.LocalClient
+	tsLocalClient *local.Client
 	queries       *data.Queries
 	watches       *WatchResults
 }
