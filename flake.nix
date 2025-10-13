@@ -34,7 +34,7 @@
             version = "v0.2.15";
             src = ./.;
 
-            vendorHash = "sha256-+wbqoZGZ08GTHz6VGACVS9GLiAhOXupOxeQr3LhzzEA=";
+            vendorHash = "sha256-ftJES1lZWWC83SDgAwHaYJ5YBA8p2ESKqfbY2Z7zstM=";
             vendorProxy = true;
           };
         }
