@@ -2,13 +2,28 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 
 	"suah.dev/gostart/data"
 )
+
+func makeFavicon(u string) (string, error) {
+	furl, err := url.Parse(u)
+	if err != nil {
+		return "", err
+	}
+	furl.Path = ""
+	furl.RawQuery = ""
+	furl.Fragment = ""
+	iconUrl, err := url.JoinPath(furl.String(), "/favicon.ico")
+	if err != nil {
+		return "", err
+	}
+	return iconUrl, nil
+}
 
 func updateIcons() {
 	ctx := context.Background()
@@ -18,11 +33,16 @@ func updateIcons() {
 	}
 
 	for _, link := range links {
-		fmt.Println(link.LogoUrl)
+		iconUrl := link.LogoUrl
 		if link.LogoUrl == "" {
-			continue
+			furl, err := makeFavicon(link.Url)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			iconUrl = furl
 		}
-		resp, err := http.Get(link.LogoUrl)
+		resp, err := http.Get(iconUrl)
 		if err != nil {
 			log.Println(err)
 			continue
