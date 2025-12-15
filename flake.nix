@@ -19,10 +19,10 @@
       nixpkgsFor = forAllSystems (system: import nixpkgs { inherit system; });
     in
     {
-      overlay = final: prev: {
-        gostart = self.packages.${prev.system}.gostart;
+      overlays.default = final: prev: {
+        gostart = self.packages.${prev.stdenv.hostPlatform.system}.gostart;
       };
-      nixosModule = import ./module.nix;
+      nixosModules.default = import ./module.nix;
       packages = forAllSystems (
         system:
         let
@@ -40,7 +40,6 @@
         }
       );
 
-      defaultPackage = forAllSystems (system: self.packages.${system}.gostart);
       devShells = forAllSystems (
         system:
         let
